@@ -67,7 +67,7 @@ export function AuthPanel({ mode, nextPath, initialMessage }: { mode: "login" | 
       <div className="mx-auto my-auto w-full max-w-[430px] py-8">
         <p className="eyebrow">{register ? "Join the community" : "Welcome back"}</p>
         <h1 className="mt-3 text-4xl font-bold tracking-[-.05em]">{register ? "Create your account" : "Sign in to Paw Promise"}</h1>
-        <p className="mt-3 leading-7 text-[var(--muted)]">{register ? "Every account starts with Member access. Privileged roles are assigned separately by an administrator." : "Continue recording care and following the paws you support."}</p>
+        <p className="mt-3 leading-7 text-[var(--muted)]">{register ? "Every account starts with Member access. Privileged roles are assigned separately by an administrator." : "Continue recording care and contributing to trusted paw histories."}</p>
 
         <form className="mt-7 grid gap-4" onSubmit={handleSubmit}>
           {register && <label className="grid gap-2 text-sm font-semibold">Full name<input className="h-12 rounded-[10px] border border-[var(--line)] bg-white px-3 font-normal" autoComplete="name" placeholder="Your name" value={fullName} onChange={event => setFullName(event.target.value)} required minLength={1} maxLength={120}/></label>}
