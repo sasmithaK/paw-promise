@@ -3,44 +3,62 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
-import { ArrowRight, FlaskConical } from "lucide-react";
+import { ArrowRight, CheckCircle2, LoaderCircle } from "lucide-react";
 import { Brand } from "@/components/layout/brand";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
 
-const DEMO_EMAIL = "member@pawpromise.demo";
-const DEMO_PASSWORD = "demo1234";
+function safeNextPath(value: string | undefined) {
+  return value?.startsWith("/") && !value.startsWith("//") ? value : "/dashboard";
+}
 
-export function AuthPanel({ mode }: { mode: "login" | "register" }) {
+export function AuthPanel({ mode, nextPath, initialMessage }: { mode: "login" | "register"; nextPath?: string; initialMessage?: string }) {
   const register = mode === "register";
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [error, setError] = useState("");
+  const [message, setMessage] = useState(initialMessage ?? "");
+  const [pending, setPending] = useState(false);
 
-  function startDemoSession(name = "Nimali Perera") {
-    window.localStorage.setItem("paw-promise-demo-session", JSON.stringify({ name, role: "MEMBER" }));
-    router.push("/dashboard");
-  }
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    if (register) {
-      startDemoSession(fullName.trim() || "Demo member");
-      return;
-    }
-    if (email.toLowerCase() === DEMO_EMAIL && password === DEMO_PASSWORD) {
-      startDemoSession();
-      return;
-    }
-    setError("This preview is not connected to Supabase yet. Use the demo member credentials below.");
-  }
+    setMessage("");
+    setPending(true);
+    const supabase = createClient();
 
-  function fillDemoCredentials() {
-    setEmail(DEMO_EMAIL);
-    setPassword(DEMO_PASSWORD);
-    setError("");
+    if (register) {
+      const callback = new URL("/auth/callback", window.location.origin);
+      callback.searchParams.set("next", safeNextPath(nextPath));
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: callback.toString(), data: { full_name: fullName.trim() } },
+      });
+      setPending(false);
+      if (signUpError) {
+        setError(signUpError.message);
+        return;
+      }
+      if (data.session) {
+        router.replace(safeNextPath(nextPath));
+        router.refresh();
+        return;
+      }
+      setMessage("Check your email to verify your address, then return here to continue.");
+      return;
+    }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    setPending(false);
+    if (signInError) {
+      setError(signInError.message === "Invalid login credentials" ? "The email or password is incorrect." : signInError.message);
+      return;
+    }
+    router.replace(safeNextPath(nextPath));
+    router.refresh();
   }
 
   return <main className="grid min-h-screen lg:grid-cols-[1fr_.9fr]">
@@ -49,21 +67,17 @@ export function AuthPanel({ mode }: { mode: "login" | "register" }) {
       <div className="mx-auto my-auto w-full max-w-[430px] py-8">
         <p className="eyebrow">{register ? "Join the community" : "Welcome back"}</p>
         <h1 className="mt-3 text-4xl font-bold tracking-[-.05em]">{register ? "Create your account" : "Sign in to Paw Promise"}</h1>
-        <p className="mt-3 leading-7 text-[var(--muted)]">{register ? "Every new account starts with Member access. Privileged roles are assigned separately by an administrator." : "Continue recording care and following the paws you support."}</p>
+        <p className="mt-3 leading-7 text-[var(--muted)]">{register ? "Every account starts with Member access. Privileged roles are assigned separately by an administrator." : "Continue recording care and following the paws you support."}</p>
 
-        {!register && <div className="mt-6 rounded-[12px] border border-[#e7b99f] bg-[#fff1e7] p-4">
-          <div className="flex items-start gap-3"><span className="grid size-9 shrink-0 place-items-center rounded-[9px] bg-[var(--primary)] text-white"><FlaskConical size={17}/></span><div><p className="text-sm font-bold">Try the demo member account</p><p className="mt-1 text-xs leading-5 text-[var(--muted)]">Explore the dashboard and submit a sample paw profile. Data stays in this browser preview.</p></div></div>
-          <dl className="mt-3 grid grid-cols-[74px_1fr] gap-y-1 rounded-[8px] bg-white/70 p-3 text-xs"><dt className="text-[var(--muted)]">Email</dt><dd className="font-mono font-semibold">{DEMO_EMAIL}</dd><dt className="text-[var(--muted)]">Password</dt><dd className="font-mono font-semibold">{DEMO_PASSWORD}</dd></dl>
-          <Button type="button" variant="secondary" size="sm" className="mt-3 w-full" onClick={fillDemoCredentials}>Use demo credentials</Button>
-        </div>}
-
-        <form className="mt-6 grid gap-4" onSubmit={handleSubmit}>
-          {register && <label className="grid gap-2 text-sm font-semibold">Full name<input className="h-12 rounded-[10px] border border-[var(--line)] bg-white px-3 font-normal" placeholder="Your name" value={fullName} onChange={event => setFullName(event.target.value)} required/></label>}
-          <label className="grid gap-2 text-sm font-semibold">Email address<input type="email" className="h-12 rounded-[10px] border border-[var(--line)] bg-white px-3 font-normal" placeholder="you@example.com" value={email} onChange={event => setEmail(event.target.value)} required/></label>
-          <label className="grid gap-2 text-sm font-semibold">Password<input type="password" className="h-12 rounded-[10px] border border-[var(--line)] bg-white px-3 font-normal" placeholder="At least 8 characters" value={password} onChange={event => setPassword(event.target.value)} required minLength={8}/></label>
+        <form className="mt-7 grid gap-4" onSubmit={handleSubmit}>
+          {register && <label className="grid gap-2 text-sm font-semibold">Full name<input className="h-12 rounded-[10px] border border-[var(--line)] bg-white px-3 font-normal" autoComplete="name" placeholder="Your name" value={fullName} onChange={event => setFullName(event.target.value)} required minLength={1} maxLength={120}/></label>}
+          <label className="grid gap-2 text-sm font-semibold">Email address<input type="email" className="h-12 rounded-[10px] border border-[var(--line)] bg-white px-3 font-normal" autoComplete="email" placeholder="you@example.com" value={email} onChange={event => setEmail(event.target.value)} required/></label>
+          <label className="grid gap-2 text-sm font-semibold">Password<input type="password" className="h-12 rounded-[10px] border border-[var(--line)] bg-white px-3 font-normal" autoComplete={register ? "new-password" : "current-password"} placeholder="At least 8 characters" value={password} onChange={event => setPassword(event.target.value)} required minLength={8}/></label>
+          {!register && <div className="-mt-1 text-right"><Link href="/forgot-password" className="text-sm font-bold text-[var(--primary-hover)] hover:underline">Forgot password?</Link></div>}
           {register && <label className="flex items-start gap-3 text-sm leading-6 text-[var(--muted)]"><input type="checkbox" required className="mt-1 accent-[var(--primary)]"/>I agree to contribute accurate observations and respect the privacy of people and animals recorded here.</label>}
           {error && <p role="alert" className="rounded-[8px] bg-[#f3d8d0] px-3 py-2 text-sm font-semibold text-[#8c3f2e]">{error}</p>}
-          <Button type="submit" className="mt-1 w-full">{register ? "Create demo member account" : "Sign in"}<ArrowRight size={17}/></Button>
+          {message && <p role="status" className="flex items-start gap-2 rounded-[8px] bg-[var(--primary-soft)] px-3 py-2 text-sm font-semibold text-[var(--primary-hover)]"><CheckCircle2 className="mt-0.5 shrink-0" size={16}/>{message}</p>}
+          <Button type="submit" disabled={pending} className="mt-1 w-full">{pending ? <><LoaderCircle className="animate-spin" size={17}/>Please wait</> : <>{register ? "Create member account" : "Sign in"}<ArrowRight size={17}/></>}</Button>
         </form>
         <p className="mt-5 text-center text-sm text-[var(--muted)]">{register ? "Already a member?" : "New to Paw Promise?"} <Link href={register ? "/login" : "/register"} className="font-bold text-[var(--primary-hover)] underline-offset-4 hover:underline">{register ? "Sign in" : "Create an account"}</Link></p>
       </div>
