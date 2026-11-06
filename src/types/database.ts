@@ -921,6 +921,34 @@ export type Database = {
       }
     }
     Functions: {
+      correct_paw_event: {
+        Args: {
+          p_event_id: string
+          p_reason: string
+          p_title: string
+          p_description: string
+          p_occurred_at: string
+          p_location_label: string
+          p_visibility: Database["public"]["Enums"]["record_visibility"]
+          p_verification_status: Database["public"]["Enums"]["verification_status"]
+        }
+        Returns: string
+      }
+      create_paw_event: {
+        Args: {
+          p_dog_id: string
+          p_event_type: Database["public"]["Enums"]["dog_event_type"]
+          p_title: string
+          p_description: string
+          p_occurred_at: string
+          p_location_label: string
+          p_visibility: Database["public"]["Enums"]["record_visibility"]
+          p_details?: Json
+          p_participants?: Json
+          p_attachments?: Json
+        }
+        Returns: string
+      }
       moderate_paw: {
         Args: { p_decision: string; p_dog_id: string; p_note?: string }
         Returns: string
