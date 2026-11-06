@@ -54,3 +54,21 @@ transactional test harness verifies pending-record isolation, independent
 moderation, safe public projection, feeding-event creation, event correction,
 and audit logging. The development database intentionally contains no sample
 paw records; the first record should be created through the application.
+
+## Milestone 4 — Event history
+
+- [x] Add type-specific forms and Zod schemas for feeding, sightings, health observations, veterinary visits, vaccinations, sterilisation, rescues, and general updates
+- [x] Create events, participants, and private attachment metadata transactionally
+- [x] Validate evidence MIME type, size, ownership, and storage path
+- [x] Keep participant identities and attachment metadata restricted by RLS
+- [x] Build the chronological public timeline without exposing private evidence or contributor identities
+- [x] Add authenticated event reporting
+- [x] Add moderator-only corrections with required reasons and append-only change history
+- [x] Enforce event-specific payload validation for direct Data API callers
+- [x] Test anonymous, member, suspended-member, moderator, RLS, report-integrity, and audit behavior
+
+Milestone 4 is complete in code and in the hosted development database. Event
+evidence stays in the private `event-evidence` bucket. Application validation
+is backed by database validation so direct API clients cannot claim a clinical
+diagnosis, submit malformed structured details, bypass account suspension, or
+attach evidence belonging to another account.
