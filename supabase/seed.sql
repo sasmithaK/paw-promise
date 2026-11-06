@@ -1,0 +1,4 @@
+-- Milestone 1 intentionally seeds no identities or personal data.
+-- Auth test accounts are created by the Milestone 2 integration-test harness so
+-- credentials never become production seed data. Illustrative UI records remain
+-- in src/lib/mock-data.ts until the first authenticated vertical slice is wired.
