@@ -1,11 +1,12 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireActiveIdentity, requireModeratorIdentity } from "@/features/auth/authorization";
 import { createClient } from "@/lib/supabase/server";
 import { dogRegistrationSchema } from "@/lib/validation/dog-registration";
-import { eventCreationSchema } from "@/lib/validation/event";
+import { eventCorrectionSchema, eventCreationSchema, eventReportSchema } from "@/lib/validation/event";
 import type { Json } from "@/types/database";
 
 export type PawRegistrationResult =
@@ -112,27 +113,133 @@ export async function moderatePawAction(formData: FormData) {
   revalidatePath("/dashboard/dogs");
 }
 
-export type PawEventResult = { ok: true } | { ok: false; message: string };
+export type PawEventResult = { ok: true; eventId: string } | { ok: false; message: string };
 
-export async function createPawEventAction(input: unknown): Promise<PawEventResult> {
+const evidenceTypes = new Map([
+  ["image/jpeg", "jpg"],
+  ["image/png", "png"],
+  ["image/webp", "webp"],
+  ["application/pdf", "pdf"],
+]);
+
+function parseJsonField(formData: FormData, key: string, fallback: unknown) {
+  const value = formData.get(key);
+  if (typeof value !== "string" || !value) return fallback;
+  try { return JSON.parse(value) as unknown; } catch { return fallback; }
+}
+
+export async function createPawEventAction(formData: FormData): Promise<PawEventResult> {
   const identity = await requireActiveIdentity();
-  const parsed = eventCreationSchema.safeParse(input);
+  const parsed = eventCreationSchema.safeParse({
+    dogId: formData.get("dogId"),
+    eventType: formData.get("eventType"),
+    title: formData.get("title"),
+    description: formData.get("description") || undefined,
+    occurredAt: formData.get("occurredAt"),
+    locationLabel: formData.get("locationLabel") || undefined,
+    visibility: formData.get("visibility"),
+    participants: parseJsonField(formData, "participants", []),
+    details: parseJsonField(formData, "details", {}),
+  });
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message || "Review the care update." };
+
+  const files = formData.getAll("attachments").filter((value): value is File => value instanceof File && value.size > 0);
+  if (files.length > 5) return { ok: false, message: "Attach no more than five evidence files." };
+  for (const file of files) {
+    if (!evidenceTypes.has(file.type)) return { ok: false, message: "Evidence must be a JPEG, PNG, WebP, or PDF file." };
+    if (file.size > 15 * 1024 * 1024) return { ok: false, message: "Each evidence file must be 15 MB or smaller." };
+  }
+
   const value = parsed.data;
   const supabase = await createClient();
-  const { error } = await supabase.from("dog_events").insert({
-    dog_id: value.dogId,
-    event_type: value.eventType,
-    title: value.title,
-    description: value.description || null,
-    occurred_at: value.occurredAt,
-    location_label: value.locationLabel || null,
-    visibility: value.visibility,
-    details: value.details as Json,
-    created_by: identity.id,
+  const uploaded: Array<{ storagePath: string; attachmentType: string }> = [];
+  for (const file of files) {
+    const extension = evidenceTypes.get(file.type)!;
+    const storagePath = `${identity.id}/${randomUUID()}.${extension}`;
+    const { error } = await supabase.storage.from("event-evidence").upload(storagePath, file, {
+      contentType: file.type,
+      upsert: false,
+    });
+    if (error) {
+      if (uploaded.length) await supabase.storage.from("event-evidence").remove(uploaded.map(item => item.storagePath));
+      return { ok: false, message: `Evidence upload failed: ${error.message}` };
+    }
+    uploaded.push({ storagePath, attachmentType: file.type });
+  }
+
+  const { data, error } = await supabase.rpc("create_paw_event", {
+    p_dog_id: value.dogId,
+    p_event_type: value.eventType,
+    p_title: value.title,
+    p_description: value.description || "",
+    p_occurred_at: value.occurredAt,
+    p_location_label: value.locationLabel || "",
+    p_visibility: value.visibility,
+    p_details: value.details as Json,
+    p_participants: value.participants as Json,
+    p_attachments: uploaded as Json,
+  });
+  if (error || !data) {
+    if (uploaded.length) await supabase.storage.from("event-evidence").remove(uploaded.map(item => item.storagePath));
+    return { ok: false, message: error?.message || "The care update could not be created." };
+  }
+  revalidatePath("/activities");
+  revalidatePath("/dogs");
+  return { ok: true, eventId: data };
+}
+
+export async function reportPawEventAction(formData: FormData): Promise<{ ok: boolean; message: string }> {
+  const identity = await requireActiveIdentity();
+  const parsed = eventReportSchema.safeParse({
+    dogId: formData.get("dogId"),
+    eventId: formData.get("eventId"),
+    reason: formData.get("reason"),
+    description: formData.get("description") || undefined,
+  });
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message || "Review the report." };
+  const supabase = await createClient();
+  const { error } = await supabase.from("reports").insert({
+    dog_id: parsed.data.dogId,
+    event_id: parsed.data.eventId,
+    reporter_id: identity.id,
+    reason: parsed.data.reason,
+    description: parsed.data.description || null,
+  });
+  if (error) return { ok: false, message: error.message };
+  revalidatePath("/admin");
+  return { ok: true, message: "Your concern was sent to the moderation team." };
+}
+
+export async function correctPawEventAction(formData: FormData): Promise<{ ok: boolean; message: string }> {
+  await requireModeratorIdentity();
+  const occurredAt = formData.get("occurredAt");
+  const occurredDate = typeof occurredAt === "string" ? new Date(occurredAt) : null;
+  const parsed = eventCorrectionSchema.safeParse({
+    eventId: formData.get("eventId"),
+    reason: formData.get("reason"),
+    title: formData.get("title"),
+    description: formData.get("description") || undefined,
+    occurredAt: occurredDate && !Number.isNaN(occurredDate.getTime()) ? occurredDate.toISOString() : occurredAt,
+    locationLabel: formData.get("locationLabel") || undefined,
+    visibility: formData.get("visibility"),
+    verificationStatus: formData.get("verificationStatus"),
+  });
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message || "Review the correction." };
+  const value = parsed.data;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("correct_paw_event", {
+    p_event_id: value.eventId,
+    p_reason: value.reason,
+    p_title: value.title,
+    p_description: value.description || "",
+    p_occurred_at: value.occurredAt,
+    p_location_label: value.locationLabel || "",
+    p_visibility: value.visibility,
+    p_verification_status: value.verificationStatus,
   });
   if (error) return { ok: false, message: error.message };
   revalidatePath("/activities");
   revalidatePath("/dogs");
-  return { ok: true };
+  revalidatePath("/admin/audit");
+  return { ok: true, message: "Correction saved in the permanent change history." };
 }
