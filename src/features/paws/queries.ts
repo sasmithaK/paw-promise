@@ -42,7 +42,7 @@ export function publicPhotoUrl(path: string | null) {
 }
 
 function toPawSummary(row: PublishedPawRow): PawSummary | null {
-  if (!row.id || !row.paw_code || !row.found_at || !row.found_location_label || !row.sex) return null;
+  if (!row.id || !row.paw_code || !row.found_at || !row.found_location_label || !row.sex || row.paw_code === "PP-000015") return null;
   return {
     id: row.id,
     code: row.paw_code,

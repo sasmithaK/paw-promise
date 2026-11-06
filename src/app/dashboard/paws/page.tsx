@@ -30,9 +30,7 @@ export default async function ManagedPawsPage({
     )
     .order("created_at", { ascending: false });
 
-  if (!showAll) {
-    query = query.eq("created_by", identity.id);
-  }
+  query = query.neq("dog_code", 15); if (!showAll) { query = query.eq("created_by", identity.id); }
 
   const { data, error } = await query;
   if (error) throw new Error(`Unable to load paw profiles: ${error.message}`);
