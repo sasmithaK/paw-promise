@@ -1,6 +1,6 @@
 # Paw Promise
 
-Frontend-first UI prototype for the Paw Promise community animal welfare platform by Leo Club of Tholangamuwa.
+Paw Promise is a community animal welfare platform by Leo Club of Tholangamuwa. The repository now contains the responsive UI prototype and the reviewed local Supabase foundation for the MVP.
 
 ## Local development
 
@@ -11,19 +11,28 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-## Demo member access
+## Supabase development foundation
 
-The UI prototype includes browser-local demo authentication so the member workflows can be reviewed before Supabase Auth is connected.
+The repository contains local Supabase configuration, versioned schema/RLS/storage migrations, cookie-based SSR client factories, server validation, and test scaffolding. The reviewed migrations are applied only to the isolated `paw-promise-dev` hosted project; no production project exists.
 
-- Email: `member@pawpromise.demo`
-- Password: `demo1234`
+1. Install Docker Desktop before using the local Supabase stack.
+2. Copy `.env.example` to `.env.local`.
+3. Start the isolated local stack with `npm run supabase:start`.
+4. Copy the local API URL and publishable key printed by the CLI into `.env.local`.
+5. Generate database types with `npm run db:types` after migrations succeed.
 
-After signing in, choose **Introduce a pup** to try the five-step paw-profile workflow. The demo stores only a lightweight session marker in browser `localStorage`; it does not send credentials or form data to a server.
+Read [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) before linking or changing a hosted project. Development and production projects must remain separate, and migrations require review before application.
+
+## Member access
+
+Authentication is connected to the hosted development Supabase project. Register with an email address, verify the confirmation email, and then choose **Introduce a pup** from the protected member workspace. Every account receives the `MEMBER` role from a trusted database trigger; registration never accepts a role.
+
+For deployed authentication, add the development project URL and publishable key to Vercel and allow the deployed `/auth/callback` URL in Supabase. See [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md).
 
 ## UI routes
 
 - Public: `/`, `/dogs`, `/dogs/PP-000142`, `/about`
-- Authentication: `/login`, `/register`
+- Authentication: `/login`, `/register`, `/forgot-password`, `/reset-password`, `/auth/callback`
 - Member: `/dashboard`, `/dashboard/dogs`, `/dogs/new`, `/activities`, `/follow-ups`
 - Administration: `/admin`, `/admin/moderation`, `/admin/users`, `/admin/audit`
 
@@ -36,7 +45,8 @@ The current visual direction uses warm ivory surfaces, terracotta-orange primary
 ```powershell
 npm run typecheck
 npm run lint
+npm test
 npm run build
 ```
 
-The current prototype uses illustrative records and remote Unsplash photography. Supabase persistence, real authentication, RLS, storage, and server-side validation are intentionally deferred to their implementation milestones.
+The current registry and dashboard still use illustrative records and remote Unsplash photography. Milestone 3 connects the paw registry vertical slice to Supabase persistence and private photo storage.
