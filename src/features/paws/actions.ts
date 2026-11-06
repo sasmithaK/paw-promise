@@ -48,8 +48,8 @@ export async function registerPawAction(input: unknown): Promise<PawRegistration
   }
 
   revalidatePath("/");
-  revalidatePath("/dogs");
-  revalidatePath("/dashboard/dogs");
+  revalidatePath("/paws");
+  revalidatePath("/dashboard/paws");
   revalidatePath("/admin");
   revalidatePath("/admin/moderation");
   return { ok: true, dogId: data[0].dog_id, pawCode: data[0].paw_code };
@@ -107,10 +107,10 @@ export async function moderatePawAction(formData: FormData) {
   }
 
   revalidatePath("/");
-  revalidatePath("/dogs");
+  revalidatePath("/paws");
   revalidatePath("/admin");
   revalidatePath("/admin/moderation");
-  revalidatePath("/dashboard/dogs");
+  revalidatePath("/dashboard/paws");
 }
 
 export type PawEventResult = { ok: true; eventId: string } | { ok: false; message: string };
@@ -184,7 +184,7 @@ export async function createPawEventAction(formData: FormData): Promise<PawEvent
     return { ok: false, message: error?.message || "The care update could not be created." };
   }
   revalidatePath("/activities");
-  revalidatePath("/dogs");
+  revalidatePath("/paws");
   return { ok: true, eventId: data };
 }
 
@@ -239,7 +239,7 @@ export async function correctPawEventAction(formData: FormData): Promise<{ ok: b
   });
   if (error) return { ok: false, message: error.message };
   revalidatePath("/activities");
-  revalidatePath("/dogs");
+  revalidatePath("/paws");
   revalidatePath("/admin/audit");
   return { ok: true, message: "Correction saved in the permanent change history." };
 }
