@@ -39,10 +39,18 @@ Milestone 2 is complete in code and in the hosted development database. Vercel m
 ## Milestone 3 — Paw registry vertical slice
 
 - [x] Registration, directory, and profile interfaces
-- [ ] Connect the registration form to React Hook Form and Zod
-- [ ] Implement private photograph upload with progress and recovery
-- [ ] Implement map selection and public-location approximation
-- [ ] Create paw profile, discovery event, photos, and participants transactionally
-- [ ] Replace mock directory/profile data with safe Supabase queries
-- [ ] Connect moderation publish/reject/request-changes actions
-- [ ] Verify the complete Member A → Moderator → Member B workflow
+- [x] Connect the registration form to React Hook Form and Zod
+- [x] Implement private photograph upload with progress and recovery
+- [x] Implement device location capture and public-location approximation
+- [x] Create paw profile, discovery event, photos, and participants transactionally
+- [x] Replace mock directory/profile and workspace data with safe Supabase queries
+- [x] Connect moderation publish/reject/request-changes actions
+- [x] Add the append-only event correction log and automatic privileged-action auditing
+- [x] Protect user administration with a server-side Super Admin check
+- [x] Verify the complete Member A → Moderator → Member B workflow
+
+Milestone 3 is complete in code and in the hosted development database. The
+transactional test harness verifies pending-record isolation, independent
+moderation, safe public projection, feeding-event creation, event correction,
+and audit logging. The development database intentionally contains no sample
+paw records; the first record should be created through the application.
