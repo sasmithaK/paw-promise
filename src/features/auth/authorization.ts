@@ -52,3 +52,11 @@ export async function requireModeratorIdentity() {
   }
   return identity;
 }
+
+export async function requireSuperAdminIdentity() {
+  const identity = await requireActiveIdentity();
+  if (!identity.roles.includes("SUPER_ADMIN")) {
+    redirect("/admin?notice=super-admin-access-required");
+  }
+  return identity;
+}
