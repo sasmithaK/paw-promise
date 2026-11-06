@@ -10,7 +10,7 @@ function relativeUpdate(value: string | null) {
 
 export function DogCard({ dog }: { dog: PawSummary }) {
   return <article className="group min-w-0 overflow-hidden rounded-[16px] border border-[var(--line)] bg-[var(--paper)] transition duration-300 hover:-translate-y-1 hover:border-[#d9b59e] hover:shadow-[0_18px_45px_rgba(87,53,34,.11)]">
-    <Link href={`/dogs/${dog.code}`} className="focus-ring block h-full">
+    <Link href={`/paws/${dog.code}`} className="focus-ring block h-full">
       <div className="relative aspect-[16/11] overflow-hidden bg-[var(--primary-soft)] sm:aspect-[4/3]">
         {dog.imageUrl ? <Image src={dog.imageUrl} alt={`${dog.name}${dog.breed ? `, ${dog.breed}` : ""}`} fill sizes="(max-width: 640px) calc(100vw - 24px), (max-width: 1280px) 50vw, 33vw" className="object-cover transition duration-500 group-hover:scale-[1.035]"/> : <div className="grid h-full place-items-center text-[var(--primary)]"><ImageIcon size={42}/><span className="sr-only">No public photograph available</span></div>}
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent"/>

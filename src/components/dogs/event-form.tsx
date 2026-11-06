@@ -72,7 +72,7 @@ export function EventForm({ dogId, pawCode, pawName }: { dogId: string; pawCode:
     setSaved(true);
   }
 
-  if (saved) return <div className="card mx-auto max-w-2xl p-10 text-center"><CheckCircle2 className="mx-auto text-[var(--primary)]" size={45}/><h1 className="mt-5 text-3xl font-bold tracking-[-.04em]">Update added to {pawName}’s history</h1><p className="mt-3 text-[var(--muted)]">The update, participants, and private evidence are now part of the append-only care record.</p><ButtonLink href={`/dogs/${pawCode}`} className="mt-7">View timeline</ButtonLink></div>;
+  if (saved) return <div className="card mx-auto max-w-2xl p-10 text-center"><CheckCircle2 className="mx-auto text-[var(--primary)]" size={45}/><h1 className="mt-5 text-3xl font-bold tracking-[-.04em]">Update added to {pawName}’s history</h1><p className="mt-3 text-[var(--muted)]">The update, participants, and private evidence are now part of the append-only care record.</p><ButtonLink href={`/paws/${pawCode}`} className="mt-7">View timeline</ButtonLink></div>;
 
   return <div className="mx-auto max-w-3xl"><p className="eyebrow">{pawName} · {pawCode}</p><h1 className="page-title mt-3">Add a care update</h1><p className="mt-3 text-[var(--muted)]">Your authenticated account is recorded as the contributor. Evidence remains private unless a later moderation workflow explicitly approves it.</p>
     <form onSubmit={handleSubmit(submit)} className="card mt-8 grid gap-6 p-5 sm:p-8">

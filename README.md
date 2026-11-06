@@ -31,9 +31,9 @@ For deployed authentication, add the development project URL and publishable key
 
 ## UI routes
 
-- Public: `/`, `/dogs`, `/dogs/PP-000142`, `/about`
+- Public: `/`, `/paws`, `/paws/PP-000142`, `/about`
 - Authentication: `/login`, `/register`, `/forgot-password`, `/reset-password`, `/auth/callback`
-- Member: `/dashboard`, `/dashboard/dogs`, `/dogs/new`, `/activities`, `/follow-ups`
+- Member: `/dashboard`, `/dashboard/paws`, `/paws/new`, `/activities`, `/follow-ups`
 - Administration: `/admin`, `/admin/moderation`, `/admin/users`, `/admin/audit`
 
 ## Design system
