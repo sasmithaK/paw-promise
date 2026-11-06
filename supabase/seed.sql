@@ -1,4 +1,4 @@
--- Milestone 1 intentionally seeds no identities or personal data.
--- Auth test accounts are created by the Milestone 2 integration-test harness so
--- credentials never become production seed data. Illustrative UI records remain
--- in src/lib/mock-data.ts until the first authenticated vertical slice is wired.
+-- Development intentionally seeds no identities, personal data, or illustrative
+-- paw records. Auth test identities are created transactionally by the RLS test
+-- harness and rolled back. Real development records should be created through
+-- the same registration and moderation workflow used by the application.

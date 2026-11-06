@@ -73,10 +73,22 @@ select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000003
 
 do $$
 begin
-  if (select count(*) from public.profiles) <> 5 then
+  if (select count(*) from public.profiles where id in (
+    '10000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000002',
+    '10000000-0000-4000-8000-000000000003',
+    '10000000-0000-4000-8000-000000000004',
+    '10000000-0000-4000-8000-000000000005'
+  )) <> 5 then
     raise exception 'FAIL: moderator cannot read profiles needed for moderation';
   end if;
-  if (select count(*) from public.user_roles) <> 7 then
+  if (select count(*) from public.user_roles where user_id in (
+    '10000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000002',
+    '10000000-0000-4000-8000-000000000003',
+    '10000000-0000-4000-8000-000000000004',
+    '10000000-0000-4000-8000-000000000005'
+  )) <> 7 then
     raise exception 'FAIL: moderator cannot read roles needed for moderation';
   end if;
 end $$;
