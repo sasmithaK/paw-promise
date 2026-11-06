@@ -1,0 +1,1 @@
+export default function Loading(){return <div className="grid min-h-screen place-items-center bg-[var(--ivory)]"><div className="text-center"><span className="mx-auto block size-10 animate-spin rounded-full border-4 border-[var(--sage)] border-t-[var(--forest)]"/><p className="mt-4 text-sm font-semibold text-[var(--muted)]">Loading Paw Promise…</p></div></div>}
