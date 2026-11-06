@@ -23,10 +23,11 @@ const adminLinks = [
 ];
 
 export function WorkspaceShell({ children, admin = false }: { children: React.ReactNode; admin?: boolean }) {
-  const pathname = usePathname(); const links = admin ? adminLinks : memberLinks;
+  const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const identity = useWorkspaceIdentity();
+  const links = admin ? adminLinks.filter(link => link.href !== "/admin/users" || identity?.roles.includes("SUPER_ADMIN")) : memberLinks;
   const displayName = identity?.fullName ?? "Community member";
   const initials = displayName.split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join("") || "PP";
   const roleLabel = identity?.roles.includes("SUPER_ADMIN") ? "Super Admin" : identity?.roles.includes("MODERATOR") ? "Moderator" : "Member";

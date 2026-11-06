@@ -126,6 +126,13 @@ export type Database = {
             referencedRelation: "published_dogs"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "dog_events_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "published_paw_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       dog_photos: {
@@ -175,6 +182,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "dog_photos_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "published_paw_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "dog_photos_uploaded_by_fkey"
             columns: ["uploaded_by"]
             isOneToOne: false
@@ -186,6 +200,9 @@ export type Database = {
       dogs: {
         Row: {
           breed: string | null
+          changes_requested_at: string | null
+          changes_requested_by: string | null
+          changes_requested_note: string | null
           colour: string | null
           created_at: string
           created_by: string
@@ -211,6 +228,9 @@ export type Database = {
         }
         Insert: {
           breed?: string | null
+          changes_requested_at?: string | null
+          changes_requested_by?: string | null
+          changes_requested_note?: string | null
           colour?: string | null
           created_at?: string
           created_by: string
@@ -236,6 +256,9 @@ export type Database = {
         }
         Update: {
           breed?: string | null
+          changes_requested_at?: string | null
+          changes_requested_by?: string | null
+          changes_requested_note?: string | null
           colour?: string | null
           created_at?: string
           created_by?: string
@@ -260,6 +283,13 @@ export type Database = {
           vaccination_status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "dogs_changes_requested_by_fkey"
+            columns: ["changes_requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "dogs_created_by_fkey"
             columns: ["created_by"]
@@ -324,6 +354,58 @@ export type Database = {
             columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_change_log: {
+        Row: {
+          change_reason: string
+          changed_by: string
+          created_at: string
+          event_id: string
+          id: string
+          new_values: Json
+          old_values: Json
+        }
+        Insert: {
+          change_reason: string
+          changed_by: string
+          created_at?: string
+          event_id: string
+          id?: string
+          new_values: Json
+          old_values: Json
+        }
+        Update: {
+          change_reason?: string
+          changed_by?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          new_values?: Json
+          old_values?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_change_log_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_change_log_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "dog_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_change_log_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "published_dog_events"
             referencedColumns: ["id"]
           },
         ]
@@ -447,6 +529,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "follow_ups_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "published_paw_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "follow_ups_related_event_id_fkey"
             columns: ["related_event_id"]
             isOneToOne: false
@@ -528,6 +617,13 @@ export type Database = {
             columns: ["dog_id"]
             isOneToOne: false
             referencedRelation: "published_dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medical_records_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "published_paw_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -629,6 +725,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "reports_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "published_paw_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "reports_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
@@ -726,6 +829,13 @@ export type Database = {
             referencedRelation: "published_dogs"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "dog_events_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "published_paw_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       published_dogs: {
@@ -785,9 +895,90 @@ export type Database = {
         }
         Relationships: []
       }
+      published_paw_profiles: {
+        Row: {
+          breed: string | null
+          colour: string | null
+          created_at: string | null
+          distinguishing_features: string | null
+          estimated_age: string | null
+          event_count: number | null
+          found_at: string | null
+          found_location_label: string | null
+          id: string | null
+          latest_event_at: string | null
+          name: string | null
+          paw_code: string | null
+          primary_photo_path: string | null
+          public_location: unknown
+          sex: Database["public"]["Enums"]["dog_sex"] | null
+          size: string | null
+          sterilisation_status: string | null
+          updated_at: string | null
+          vaccination_status: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      correct_paw_event: {
+        Args: {
+          p_event_id: string
+          p_reason: string
+          p_title: string
+          p_description: string
+          p_occurred_at: string
+          p_location_label: string
+          p_visibility: Database["public"]["Enums"]["record_visibility"]
+          p_verification_status: Database["public"]["Enums"]["verification_status"]
+        }
+        Returns: string
+      }
+      create_paw_event: {
+        Args: {
+          p_dog_id: string
+          p_event_type: Database["public"]["Enums"]["dog_event_type"]
+          p_title: string
+          p_description: string
+          p_occurred_at: string
+          p_location_label: string
+          p_visibility: Database["public"]["Enums"]["record_visibility"]
+          p_details?: Json
+          p_participants?: Json
+          p_attachments?: Json
+        }
+        Returns: string
+      }
+      moderate_paw: {
+        Args: { p_decision: string; p_dog_id: string; p_note?: string }
+        Returns: string
+      }
+      register_paw: {
+        Args: {
+          p_breed: string
+          p_colour: string
+          p_discovery_description: string
+          p_distinguishing_features: string
+          p_estimated_age: string
+          p_found_at: string
+          p_found_location_label: string
+          p_initial_observation: string
+          p_latitude: number
+          p_location_accuracy_m: number
+          p_longitude: number
+          p_name: string
+          p_participants?: Json
+          p_primary_photo_path: string
+          p_sex: Database["public"]["Enums"]["dog_sex"]
+          p_size: string
+          p_sterilisation_status: string
+          p_vaccination_status: string
+        }
+        Returns: {
+          dog_id: string
+          paw_code: string
+        }[]
+      }
     }
     Enums: {
       account_status: "ACTIVE" | "SUSPENDED" | "DISABLED"
