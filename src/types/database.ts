@@ -923,29 +923,40 @@ export type Database = {
     Functions: {
       correct_paw_event: {
         Args: {
+          p_description: string
           p_event_id: string
+          p_location_label: string
+          p_occurred_at: string
           p_reason: string
           p_title: string
-          p_description: string
-          p_occurred_at: string
-          p_location_label: string
-          p_visibility: Database["public"]["Enums"]["record_visibility"]
           p_verification_status: Database["public"]["Enums"]["verification_status"]
+          p_visibility: Database["public"]["Enums"]["record_visibility"]
+        }
+        Returns: string
+      }
+      create_follow_up: {
+        Args: {
+          p_assigned_to: string
+          p_description: string
+          p_dog_id: string
+          p_due_at: string
+          p_related_event_id: string
+          p_title: string
         }
         Returns: string
       }
       create_paw_event: {
         Args: {
+          p_attachments?: Json
+          p_description: string
+          p_details?: Json
           p_dog_id: string
           p_event_type: Database["public"]["Enums"]["dog_event_type"]
-          p_title: string
-          p_description: string
-          p_occurred_at: string
           p_location_label: string
-          p_visibility: Database["public"]["Enums"]["record_visibility"]
-          p_details?: Json
+          p_occurred_at: string
           p_participants?: Json
-          p_attachments?: Json
+          p_title: string
+          p_visibility: Database["public"]["Enums"]["record_visibility"]
         }
         Returns: string
       }
@@ -978,6 +989,55 @@ export type Database = {
           dog_id: string
           paw_code: string
         }[]
+      }
+      resolve_community_report: {
+        Args: {
+          p_report_id: string
+          p_resolution_note: string
+          p_status: Database["public"]["Enums"]["report_status"]
+        }
+        Returns: string
+      }
+      set_member_account_status: {
+        Args: {
+          p_reason: string
+          p_status: Database["public"]["Enums"]["account_status"]
+          p_user_id: string
+        }
+        Returns: string
+      }
+      set_member_role: {
+        Args: {
+          p_enabled: boolean
+          p_reason: string
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_user_id: string
+        }
+        Returns: string
+      }
+      update_follow_up_status: {
+        Args: {
+          p_follow_up_id: string
+          p_status: Database["public"]["Enums"]["follow_up_status"]
+        }
+        Returns: string
+      }
+      update_pending_paw: {
+        Args: {
+          p_breed: string
+          p_colour: string
+          p_distinguishing_features: string
+          p_dog_id: string
+          p_estimated_age: string
+          p_found_at: string
+          p_found_location_label: string
+          p_name: string
+          p_sex: Database["public"]["Enums"]["dog_sex"]
+          p_size: string
+          p_sterilisation_status: string
+          p_vaccination_status: string
+        }
+        Returns: string
       }
     }
     Enums: {
@@ -1159,4 +1219,3 @@ export const Constants = {
     },
   },
 } as const
-
