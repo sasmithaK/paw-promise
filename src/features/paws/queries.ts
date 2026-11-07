@@ -42,7 +42,7 @@ export function publicPhotoUrl(path: string | null) {
 }
 
 function toPawSummary(row: PublishedPawRow): PawSummary | null {
-  if (!row.id || !row.paw_code || !row.found_at || !row.found_location_label || !row.sex || row.paw_code === "PP-000015") return null;
+  if (!row.id || !row.paw_code || !row.found_at || !row.found_location_label || !row.sex) return null;
   return {
     id: row.id,
     code: row.paw_code,
@@ -142,4 +142,41 @@ export async function getPendingPawsForModeration() {
       changesRequestedNote: row.changes_requested_note,
     } satisfies PendingPaw;
   }));
+}
+
+export type DuplicateCandidate = {
+  pendingCode: string;
+  pendingName: string;
+  existingCode: string;
+  existingName: string;
+  reasons: string[];
+};
+
+const comparable = (value: string | null) => value?.trim().toLocaleLowerCase() || null;
+
+export async function getDuplicateCandidates(): Promise<DuplicateCandidate[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("dogs").select("id,dog_code,name,breed,colour,found_location_label,record_status").order("dog_code");
+  if (error) throw new Error(`Unable to check duplicate candidates: ${error.message}`);
+  const pending = data.filter(row => row.record_status === "PENDING");
+  const candidates: DuplicateCandidate[] = [];
+  for (const item of pending) {
+    for (const existing of data) {
+      if (existing.id === item.id || existing.record_status === "REJECTED") continue;
+      const reasons: string[] = [];
+      if (comparable(item.name) && comparable(item.name) === comparable(existing.name)) reasons.push("same name");
+      if (comparable(item.breed) && comparable(item.breed) === comparable(existing.breed)) reasons.push("same breed/type");
+      if (comparable(item.colour) && comparable(item.colour) === comparable(existing.colour)) reasons.push("same colour");
+      if (comparable(item.found_location_label) === comparable(existing.found_location_label)) reasons.push("same locality");
+      if (reasons.length < 2) continue;
+      candidates.push({
+        pendingCode: `PP-${String(item.dog_code).padStart(6, "0")}`,
+        pendingName: item.name?.trim() || "Unnamed pup",
+        existingCode: `PP-${String(existing.dog_code).padStart(6, "0")}`,
+        existingName: existing.name?.trim() || "Unnamed pup",
+        reasons,
+      });
+    }
+  }
+  return candidates;
 }
