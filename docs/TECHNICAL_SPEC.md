@@ -926,8 +926,22 @@ Use two location values for a dog:
 
 -   `found_location`: exact or volunteer-provided coordinate, restricted
     to authorised users.
--   `public_location`: deliberately approximate coordinate used for
-    public display.
+-   `public_location`: deliberately approximate coordinate retained for
+    possible future public display. The current UI does not display map
+    coordinates to signed-out visitors.
+
+Every geocoded event stores its exact point in `dog_events.location` and
+its device accuracy, when available, in
+`dog_events.location_accuracy_m`. Exact discovery and event points are
+available only to active authenticated Members, Moderators, and Super
+Admins. Anonymous clients have neither column privileges nor RPC access
+to these coordinates.
+
+The authenticated paw record renders every event containing a coordinate
+as a point on the member-only history map. Event row visibility still
+applies: public events on published paws are visible to all active members,
+while restricted events remain visible only to their contributor and
+moderation staff.
 
 The registration map should support:
 
@@ -976,7 +990,7 @@ or self-host tiles if the project eventually has the resources.
 
 -   Date/time first found
 -   Approximate locality (required)
--   Map pin (optional if not known)
+-   Exact map pin (required when registering a new paw)
 -   Location accuracy (if available)
 -   Discovery description
 -   Initial observations

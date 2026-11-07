@@ -43,6 +43,7 @@ Milestone 2 is complete in code and in the hosted development database. Vercel m
 - [x] Implement private photograph upload with progress and recovery
 - [x] Implement device location capture and public-location approximation
 - [x] Add an interactive OpenStreetMap pin selector with mobile tap support
+- [x] Require an exact member-only discovery point for new paw profiles
 - [x] Support multiple discovery participants in the registration wizard
 - [x] Create paw profile, discovery event, photos, and participants transactionally
 - [x] Allow contributors to correct their own pending profiles and resubmit requested changes
@@ -61,6 +62,9 @@ paw records; the first record should be created through the application.
 ## Milestone 4 — Event history
 
 - [x] Add type-specific forms and Zod schemas for feeding, sightings, health observations, veterinary visits, vaccinations, sterilisation, rescues, and general updates
+- [x] Allow care updates to capture device GPS or a manually selected exact point
+- [x] Render geocoded discovery and care events on an active-member-only paw map
+- [x] Deny anonymous and suspended accounts access to exact location columns and the location-map RPC
 - [x] Create events, participants, and private attachment metadata transactionally
 - [x] Validate evidence MIME type, size, ownership, and storage path
 - [x] Keep participant identities and attachment metadata restricted by RLS
