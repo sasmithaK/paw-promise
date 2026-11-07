@@ -199,6 +199,11 @@ export type Database = {
       }
       dogs: {
         Row: {
+          archive_category: string | null
+          archive_cleanup_pending: boolean
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           breed: string | null
           changes_requested_at: string | null
           changes_requested_by: string | null
@@ -216,6 +221,7 @@ export type Database = {
           location_accuracy_m: number | null
           name: string | null
           public_location: unknown
+          previous_record_status: Database["public"]["Enums"]["dog_record_status"] | null
           record_status: Database["public"]["Enums"]["dog_record_status"]
           review_note: string | null
           reviewed_at: string | null
@@ -227,6 +233,11 @@ export type Database = {
           vaccination_status: string
         }
         Insert: {
+          archive_category?: string | null
+          archive_cleanup_pending?: boolean
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           breed?: string | null
           changes_requested_at?: string | null
           changes_requested_by?: string | null
@@ -244,6 +255,7 @@ export type Database = {
           location_accuracy_m?: number | null
           name?: string | null
           public_location?: unknown
+          previous_record_status?: Database["public"]["Enums"]["dog_record_status"] | null
           record_status?: Database["public"]["Enums"]["dog_record_status"]
           review_note?: string | null
           reviewed_at?: string | null
@@ -255,6 +267,11 @@ export type Database = {
           vaccination_status?: string
         }
         Update: {
+          archive_category?: string | null
+          archive_cleanup_pending?: boolean
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           breed?: string | null
           changes_requested_at?: string | null
           changes_requested_by?: string | null
@@ -272,6 +289,7 @@ export type Database = {
           location_accuracy_m?: number | null
           name?: string | null
           public_location?: unknown
+          previous_record_status?: Database["public"]["Enums"]["dog_record_status"] | null
           record_status?: Database["public"]["Enums"]["dog_record_status"]
           review_note?: string | null
           reviewed_at?: string | null
@@ -283,6 +301,13 @@ export type Database = {
           vaccination_status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "dogs_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "dogs_changes_requested_by_fkey"
             columns: ["changes_requested_by"]
@@ -921,6 +946,14 @@ export type Database = {
       }
     }
     Functions: {
+      archive_paw: {
+        Args: { p_category: string; p_dog_id: string; p_reason: string }
+        Returns: Json
+      }
+      confirm_paw_archive_cleanup: {
+        Args: { p_dog_id: string }
+        Returns: string
+      }
       correct_paw_event: {
         Args: {
           p_description: string
@@ -996,6 +1029,10 @@ export type Database = {
           p_resolution_note: string
           p_status: Database["public"]["Enums"]["report_status"]
         }
+        Returns: string
+      }
+      restore_archived_paw: {
+        Args: { p_dog_id: string; p_reason: string }
         Returns: string
       }
       set_member_account_status: {
