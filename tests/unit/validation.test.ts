@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { dogRegistrationSchema } from "@/lib/validation/dog-registration";
 import { eventCreationSchema, eventCorrectionSchema, eventReportSchema } from "@/lib/validation/event";
+import { accountStatusSchema, followUpCreateSchema, reportResolutionSchema, roleChangeSchema } from "@/lib/validation/milestone-five";
 
 const validRegistration = {
   primaryPhotoPath: "user-id/photo.webp",
@@ -23,6 +24,37 @@ describe("dog registration validation", () => {
       coordinates: { latitude: 100, longitude: 80 },
     });
     expect(result.success).toBe(false);
+  });
+
+  it("accepts multiple discovery participants", () => {
+    expect(dogRegistrationSchema.safeParse({
+      ...validRegistration,
+      participants: [
+        { kind: "MEMBER", userId: "00000000-0000-4000-8000-000000000001", context: "Contributor" },
+        { kind: "NON_MEMBER", name: "Community volunteer", context: "Present" },
+      ],
+    }).success).toBe(true);
+  });
+});
+
+describe("Milestone 5 workflow validation", () => {
+  it("accepts a complete follow-up and report decision", () => {
+    expect(followUpCreateSchema.safeParse({
+      dogId: "00000000-0000-4000-8000-000000000001",
+      title: "Arrange vaccination",
+      dueAt: "2026-11-12T10:00:00+05:30",
+      assignedTo: "00000000-0000-4000-8000-000000000002",
+    }).success).toBe(true);
+    expect(reportResolutionSchema.safeParse({
+      reportId: "00000000-0000-4000-8000-000000000003",
+      status: "RESOLVED",
+      resolutionNote: "Checked against the care record.",
+    }).success).toBe(true);
+  });
+
+  it("requires reasons for account and privileged-role changes", () => {
+    expect(accountStatusSchema.safeParse({ userId: "00000000-0000-4000-8000-000000000001", status: "SUSPENDED", reason: "" }).success).toBe(false);
+    expect(roleChangeSchema.safeParse({ userId: "00000000-0000-4000-8000-000000000001", role: "MODERATOR", enabled: "true", reason: "" }).success).toBe(false);
   });
 });
 
