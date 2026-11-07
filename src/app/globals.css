@@ -50,3 +50,4 @@ button, a, input, select, textarea { outline-color: var(--primary); outline-offs
 @media (max-width: 640px) {
   .container-shell { width: min(100% - 24px, 1180px); }
 }
+@import "leaflet/dist/leaflet.css";
