@@ -30,7 +30,7 @@ export default async function ManagedPawsPage({
     )
     .order("created_at", { ascending: false });
 
-  query = query.neq("dog_code", 15); if (!showAll) { query = query.eq("created_by", identity.id); }
+  if (!showAll) query = query.eq("created_by", identity.id);
 
   const { data, error } = await query;
   if (error) throw new Error(`Unable to load paw profiles: ${error.message}`);
@@ -114,12 +114,9 @@ export default async function ManagedPawsPage({
           </div>
           {paws.map((paw) => {
             const formattedCode = `PP-${String(paw.dog_code).padStart(6, "0")}`;
-            const targetHref =
-              paw.record_status === "PUBLISHED"
-                ? `/paws/${formattedCode}`
-                : isStaff
-                  ? "/admin/moderation"
-                  : "/dashboard/paws";
+            const targetHref = paw.record_status === "PENDING" && paw.created_by === identity.id
+              ? `/dashboard/paws/${formattedCode}/edit`
+              : `/dashboard/paws/${formattedCode}`;
             const submitter = paw.profiles?.full_name || "Community member";
 
             return (
@@ -172,12 +169,12 @@ export default async function ManagedPawsPage({
                 </div>
 
                 <div className="flex justify-end">
-                  {paw.record_status === "PUBLISHED" ? (
+                  {paw.record_status === "PUBLISHED" || paw.created_by === identity.id ? (
                     <Link
                       href={targetHref}
                       className="inline-flex items-center gap-1 rounded-[8px] bg-[var(--primary-soft)] px-3 py-1.5 text-xs font-bold text-[var(--primary-hover)] transition-colors hover:bg-[var(--primary)] hover:text-white"
                     >
-                      View profile <ArrowRight size={14} />
+                      {paw.record_status === "PENDING" ? "Edit profile" : "View record"} <ArrowRight size={14} />
                     </Link>
                   ) : isStaff ? (
                     <Link

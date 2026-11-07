@@ -7,6 +7,7 @@ import { requireActiveIdentity, requireModeratorIdentity } from "@/features/auth
 import { createClient } from "@/lib/supabase/server";
 import { dogRegistrationSchema } from "@/lib/validation/dog-registration";
 import { eventCorrectionSchema, eventCreationSchema, eventReportSchema } from "@/lib/validation/event";
+import { pendingPawUpdateSchema } from "@/lib/validation/milestone-five";
 import type { Json } from "@/types/database";
 
 export type PawRegistrationResult =
@@ -242,4 +243,47 @@ export async function correctPawEventAction(formData: FormData): Promise<{ ok: b
   revalidatePath("/paws");
   revalidatePath("/admin/audit");
   return { ok: true, message: "Correction saved in the permanent change history." };
+}
+
+export async function updatePendingPawAction(formData: FormData): Promise<void> {
+  const identity = await requireActiveIdentity();
+  const foundAtValue = formData.get("foundAt");
+  const foundAt = typeof foundAtValue === "string" ? new Date(foundAtValue) : null;
+  const parsed = pendingPawUpdateSchema.safeParse({
+    dogId: formData.get("dogId"),
+    name: formData.get("name") || undefined,
+    sex: formData.get("sex"),
+    estimatedAge: formData.get("estimatedAge") || undefined,
+    breed: formData.get("breed") || undefined,
+    colour: formData.get("colour") || undefined,
+    size: formData.get("size"),
+    distinguishingFeatures: formData.get("distinguishingFeatures") || undefined,
+    foundAt: foundAt && !Number.isNaN(foundAt.getTime()) ? foundAt.toISOString() : foundAtValue,
+    foundLocationLabel: formData.get("foundLocationLabel"),
+    vaccinationStatus: formData.get("vaccinationStatus"),
+    sterilisationStatus: formData.get("sterilisationStatus"),
+  });
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message || "Review the paw profile.");
+  const value = parsed.data;
+  const supabase = await createClient();
+  const { data: existing, error: loadError } = await supabase.from("dogs").select("created_by,record_status").eq("id", value.dogId).single();
+  if (loadError || !existing) throw new Error("The pending paw profile could not be loaded.");
+  if (existing.created_by !== identity.id || existing.record_status !== "PENDING") throw new Error("Only your own pending profile can be edited.");
+  const { error } = await supabase.rpc("update_pending_paw" as never, {
+    p_dog_id: value.dogId,
+    p_name: value.name || "",
+    p_sex: value.sex,
+    p_estimated_age: value.estimatedAge || "",
+    p_breed: value.breed || "",
+    p_colour: value.colour || "",
+    p_size: value.size,
+    p_distinguishing_features: value.distinguishingFeatures || "",
+    p_found_at: value.foundAt,
+    p_found_location_label: value.foundLocationLabel,
+    p_vaccination_status: value.vaccinationStatus,
+    p_sterilisation_status: value.sterilisationStatus,
+  } as never);
+  if (error) throw new Error(error.message);
+  revalidatePath("/dashboard/paws");
+  revalidatePath("/admin/moderation");
 }
