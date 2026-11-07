@@ -61,57 +61,100 @@ const moderationInputSchema = z.object({
   decision: z.enum(["PUBLISH", "REJECT", "REQUEST_CHANGES"]),
   note: z.string().trim().max(1000).optional(),
 }).superRefine((value, context) => {
-  if (value.decision === "REQUEST_CHANGES" && !value.note) {
+  if ((value.decision === "REQUEST_CHANGES" || value.decision === "REJECT") && !value.note) {
     context.addIssue({ code: "custom", path: ["note"], message: "Explain what needs to change." });
   }
 });
 
-export async function moderatePawAction(formData: FormData) {
+export type ModerationResult = { ok: boolean; message: string };
+
+const approvedPhotoMimeTypes: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+};
+
+function approvedPhotoMimeType(path: string, reportedType: string) {
+  if (Object.values(approvedPhotoMimeTypes).includes(reportedType)) return reportedType;
+  const extension = path.split(".").pop()?.toLowerCase() || "";
+  return approvedPhotoMimeTypes[extension] || null;
+}
+
+function revalidateModerationViews() {
+  revalidatePath("/");
+  revalidatePath("/paws");
+  revalidatePath("/admin");
+  revalidatePath("/admin/moderation");
+  revalidatePath("/dashboard/paws");
+}
+
+export async function moderatePawAction(
+  _previous: ModerationResult,
+  formData: FormData,
+): Promise<ModerationResult> {
   const identity = await requireModeratorIdentity();
   const parsed = moderationInputSchema.safeParse({
     dogId: formData.get("dogId"),
     decision: formData.get("decision"),
     note: formData.get("note"),
   });
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message || "Invalid moderation request");
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message || "Review the moderation decision." };
+  }
 
   const { dogId, decision, note } = parsed.data;
   const supabase = await createClient();
   const { data: paw, error: pawError } = await supabase.from("dogs").select("id,created_by,record_status").eq("id", dogId).single();
-  if (pawError || !paw) throw new Error("The paw profile could not be loaded.");
-  if (paw.created_by === identity.id) throw new Error("You cannot review your own submission.");
-  if (paw.record_status !== "PENDING") throw new Error("This profile is no longer pending review.");
+  if (pawError || !paw) return { ok: false, message: "The paw profile could not be loaded. Refresh and try again." };
+  if (paw.created_by === identity.id) return { ok: false, message: "You cannot review your own submission." };
+  if (paw.record_status !== "PENDING") return { ok: false, message: "This profile has already been reviewed." };
 
   let publishedPhotoPath: string | null = null;
-  let photoId: string | null = null;
   if (decision === "PUBLISH") {
-    const { data: photo, error: photoError } = await supabase.from("dog_photos").select("id,storage_path").eq("dog_id", dogId).eq("is_primary", true).single();
-    if (photoError || !photo) throw new Error("A primary photograph is required before publication.");
+    const { data: photo, error: photoError } = await supabase.from("dog_photos").select("storage_path").eq("dog_id", dogId).eq("is_primary", true).single();
+    if (photoError || !photo) return { ok: false, message: "A primary photograph is required before publication." };
     const { data: privatePhoto, error: downloadError } = await supabase.storage.from("dog-private-photos").download(photo.storage_path);
-    if (downloadError || !privatePhoto) throw new Error("The private photograph could not be prepared for publication.");
-    const { error: uploadError } = await supabase.storage.from("dog-public-photos").upload(photo.storage_path, privatePhoto, { contentType: privatePhoto.type, upsert: false });
-    if (uploadError) throw new Error(`The public photograph could not be created: ${uploadError.message}`);
-    publishedPhotoPath = photo.storage_path;
-    photoId = photo.id;
-    const { error: photoUpdateError } = await supabase.from("dog_photos").update({ visibility: "PUBLIC" }).eq("id", photo.id);
-    if (photoUpdateError) {
-      await supabase.storage.from("dog-public-photos").remove([photo.storage_path]);
-      throw new Error("The photograph approval could not be saved.");
+    if (downloadError || !privatePhoto) {
+      return { ok: false, message: "The private photograph could not be prepared for publication." };
     }
+    const contentType = approvedPhotoMimeType(photo.storage_path, privatePhoto.type);
+    if (!contentType) return { ok: false, message: "The primary photograph has an unsupported file type." };
+    const { error: uploadError } = await supabase.storage.from("dog-public-photos").upload(photo.storage_path, privatePhoto, {
+      contentType,
+      upsert: true,
+    });
+    if (uploadError) return { ok: false, message: "The approved photograph could not be published. Please try again." };
+    publishedPhotoPath = photo.storage_path;
   }
 
-  const { error } = await supabase.rpc("moderate_paw", { p_dog_id: dogId, p_decision: decision, p_note: note || undefined });
+  const { error } = await supabase.rpc("moderate_paw", {
+    p_dog_id: dogId,
+    p_decision: decision,
+    p_note: note || undefined,
+  });
   if (error) {
+    // A concurrent moderator may have published while this request was
+    // copying the same source image. Never remove their successful public
+    // object; treat that race as an already-completed success.
+    const { data: currentPaw } = await supabase.from("dogs").select("record_status").eq("id", dogId).maybeSingle();
+    if (currentPaw?.record_status === "PUBLISHED") {
+      revalidateModerationViews();
+      return { ok: true, message: "This paw profile was already published by another reviewer." };
+    }
     if (publishedPhotoPath) await supabase.storage.from("dog-public-photos").remove([publishedPhotoPath]);
-    if (photoId) await supabase.from("dog_photos").update({ visibility: "PRIVATE" }).eq("id", photoId);
-    throw new Error(error.message);
+    return { ok: false, message: error.message || "The moderation decision could not be saved." };
   }
 
-  revalidatePath("/");
-  revalidatePath("/paws");
-  revalidatePath("/admin");
-  revalidatePath("/admin/moderation");
-  revalidatePath("/dashboard/paws");
+  revalidateModerationViews();
+  return {
+    ok: true,
+    message: decision === "PUBLISH"
+      ? "Paw profile published."
+      : decision === "REJECT"
+        ? "Paw profile rejected."
+        : "Changes requested from the submitting member.",
+  };
 }
 
 export type PawEventResult = { ok: true; eventId: string } | { ok: false; message: string };
