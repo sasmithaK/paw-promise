@@ -44,3 +44,22 @@ Before a public release, run unit tests, the hosted database permission suites,
 the production build, and Supabase security/health advisors. Confirm the Auth
 redirect allow-list, custom SMTP, leaked-password protection, and environment
 separation for development and production.
+## Abuse and administrative controls
+
+- New accounts receive only the `MEMBER` role from a database trigger.
+- Suspended and disabled accounts cannot create profiles, events, reports, or follow-ups.
+- Exact locations, participant identities, pending photographs, and evidence remain restricted.
+- Paw registration is limited to three simultaneous pending profiles and ten submissions per 24 hours.
+- Community reports are limited to twenty submissions per account per 24 hours.
+- Moderation, event corrections, report decisions, account status, and role changes are audited.
+- A user cannot moderate their own profile, resolve their own report, or change their own privileged role/status.
+
+## Hosted Auth configuration before public launch
+
+Enable **Leaked password protection** in Supabase Dashboard → Authentication →
+Sign In / Providers → Password security. Supabase currently reports this as the
+only security-advisor warning. Public email delivery also requires a reviewed
+custom SMTP provider and the production callback URL in the Auth redirect allow-list.
+
+Run all SQL files in `supabase/tests/database` against the development project
+after any migration that changes roles, RLS, storage, or privileged functions.

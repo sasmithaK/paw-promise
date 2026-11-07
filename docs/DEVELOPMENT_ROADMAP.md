@@ -42,7 +42,10 @@ Milestone 2 is complete in code and in the hosted development database. Vercel m
 - [x] Connect the registration form to React Hook Form and Zod
 - [x] Implement private photograph upload with progress and recovery
 - [x] Implement device location capture and public-location approximation
+- [x] Add an interactive OpenStreetMap pin selector with mobile tap support
+- [x] Support multiple discovery participants in the registration wizard
 - [x] Create paw profile, discovery event, photos, and participants transactionally
+- [x] Allow contributors to correct their own pending profiles and resubmit requested changes
 - [x] Replace mock directory/profile and workspace data with safe Supabase queries
 - [x] Connect moderation publish/reject/request-changes actions
 - [x] Add the append-only event correction log and automatic privileged-action auditing
@@ -62,6 +65,7 @@ paw records; the first record should be created through the application.
 - [x] Validate evidence MIME type, size, ownership, and storage path
 - [x] Keep participant identities and attachment metadata restricted by RLS
 - [x] Build the chronological public timeline without exposing private evidence or contributor identities
+- [x] Build an authenticated history that includes every event the current role is authorised to read
 - [x] Add authenticated event reporting
 - [x] Add moderator-only corrections with required reasons and append-only change history
 - [x] Enforce event-specific payload validation for direct Data API callers
@@ -72,3 +76,34 @@ evidence stays in the private `event-evidence` bucket. Application validation
 is backed by database validation so direct API clients cannot claim a clinical
 diagnosis, submit malformed structured details, bypass account suspension, or
 attach evidence belonging to another account.
+
+## Milestone 5 — Follow-ups and moderation
+
+- [x] Remove record-specific UI exclusions and make directory tests data-independent
+- [x] Add per-member pending-profile and daily registration quotas
+- [x] Add a daily community-report quota
+- [x] Create and assign follow-ups through a validated transactional RPC
+- [x] Build due and overdue views with status transitions and completion timestamps
+- [x] Keep direct Data API follow-up assignments under restrictive RLS
+- [x] Complete the publish, reject, and request-changes moderation queue
+- [x] Add conservative duplicate-candidate suggestions without automatic merging
+- [x] Add the moderator community-report queue and resolution workflow
+- [x] Add Super Admin account suspension, disabling, and reactivation
+- [x] Add Super Admin role grant and revocation with self-protection
+- [x] Require reasons and audit role, account-status, report, and follow-up changes
+- [x] Add a hosted transactional Milestone 5 permission test
+- [x] Regenerate database TypeScript types from the hosted development schema
+
+Milestone 5 is complete in code and in the hosted development database. The
+follow-up, report, and account-management RPCs independently verify the current
+session and role. Registration and report quotas are also enforced by RLS so a
+direct Data API caller cannot bypass the application actions.
+
+### Verification snapshot — 2026-11-07
+
+- TypeScript, ESLint, unit tests, and the production build pass.
+- Hosted auth, registry, event-history, and Milestone 5 transaction suites pass and roll back their fixtures.
+- Desktop/mobile Playwright smoke tests are data-independent and pass against
+  the Vercel testing deployment using an installed browser channel.
+- Supabase security advisors report only the hosted Auth setting for leaked
+  password protection; enable it in the dashboard before a public launch.
