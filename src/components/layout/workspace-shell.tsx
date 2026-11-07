@@ -69,7 +69,7 @@ export function WorkspaceShell({
   const roleLabel = isSuperAdmin ? "Super Admin" : identity?.roles.includes("MODERATOR") ? "Moderator" : "Member";
 
   async function signOut() {
-    await createClient().auth.signOut();
+    await createClient().auth.signOut({ scope: "local" });
     router.replace("/login");
     router.refresh();
   }
