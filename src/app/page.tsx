@@ -4,12 +4,13 @@ import { PublicHeader } from "@/components/layout/public-header";
 import { PublicFooter } from "@/components/layout/public-footer";
 import { ButtonLink } from "@/components/ui/button";
 import { DogCard } from "@/components/dogs/dog-card";
+import { getAuthenticatedIdentity } from "@/features/auth/authorization";
 import { getPublishedPaws } from "@/features/paws/queries";
 
 export default async function HomePage() {
-  const recentPaws = await getPublishedPaws(3);
+  const [recentPaws, viewer] = await Promise.all([getPublishedPaws(3), getAuthenticatedIdentity()]);
   const heroPaw = recentPaws[0];
-  return <><PublicHeader /><main>
+  return <><PublicHeader viewer={viewer ? { fullName: viewer.fullName } : null}/><main>
     <section className="container-shell grid min-h-[570px] items-center gap-9 py-9 lg:grid-cols-[1.02fr_.98fr] lg:py-12"><div className="max-w-2xl"><p className="eyebrow">A community record of care</p><h1 className="display mt-5 text-balance">Every paw deserves to be remembered.</h1><p className="body-lg mt-6 max-w-xl">Paw Promise helps neighbours and volunteers record the pups they care for—so every sighting, meal, treatment, and act of kindness becomes part of one trusted story.</p><div className="mt-8 flex flex-wrap gap-3"><ButtonLink href="/paws" size="lg">Meet the pups <ArrowRight size={18} /></ButtonLink><ButtonLink href="/register" variant="secondary" size="lg">Join the community</ButtonLink></div></div>
       <div className="relative min-h-[470px]"><div className="absolute inset-x-5 top-0 grid h-[86%] place-items-center overflow-hidden rounded-[18px] bg-[var(--primary-soft)] sm:inset-x-10">{heroPaw?.imageUrl ? <Image src={heroPaw.imageUrl} alt={`${heroPaw.name}, a community pup`} fill priority sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" /> : <div className="text-center text-[var(--primary)]"><PawPrint className="mx-auto" size={76} /><p className="mt-4 max-w-xs font-bold text-[var(--cocoa)]">The first published community paw will appear here.</p></div>}</div><div className="absolute bottom-0 left-0 max-w-[270px] rounded-[14px] border border-[var(--line)] bg-[var(--paper)] p-5 shadow-soft"><p className="text-xs font-bold uppercase tracking-[.11em] text-[var(--primary)]">A living care history</p><p className="mt-2 text-sm leading-6 text-[var(--muted)]">Each paw profile preserves what happened, when it happened, and who contributed.</p></div>{heroPaw && <div className="absolute right-0 top-8 rounded-full bg-[var(--paper)] px-4 py-2 text-sm font-bold shadow-soft">{heroPaw.name} · {heroPaw.code}</div>}</div>
     </section>

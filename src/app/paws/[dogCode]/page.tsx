@@ -7,6 +7,7 @@ import { PublicFooter } from "@/components/layout/public-footer";
 import { ButtonLink } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { EventReportForm } from "@/components/dogs/event-report-form";
+import { getAuthenticatedIdentity } from "@/features/auth/authorization";
 import { getPublishedPaw, getPublishedPawEvents } from "@/features/paws/queries";
 
 const formatDate = (value: string) => new Intl.DateTimeFormat("en-LK", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
@@ -16,8 +17,8 @@ export default async function PawProfilePage({ params }: { params: Promise<{ dog
   const { dogCode } = await params;
   const paw = await getPublishedPaw(dogCode);
   if (!paw) notFound();
-  const events = await getPublishedPawEvents(paw.id);
-  return <><PublicHeader/><main><div className="container-shell py-5 sm:py-6"><Link href="/paws" className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--primary)]"><ArrowLeft size={16}/>Back to paw directory</Link></div>
+  const [events, viewer] = await Promise.all([getPublishedPawEvents(paw.id), getAuthenticatedIdentity()]);
+  return <><PublicHeader viewer={viewer ? { fullName: viewer.fullName } : null}/><main><div className="container-shell py-5 sm:py-6"><Link href="/paws" className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--muted)] hover:text-[var(--primary)]"><ArrowLeft size={16}/>Back to paw directory</Link></div>
     <section className="container-shell grid min-w-0 gap-6 lg:grid-cols-[1.12fr_.88fr] lg:gap-8"><div className="relative grid aspect-[4/3] min-w-0 place-items-center overflow-hidden rounded-[16px] bg-[var(--primary-soft)] lg:aspect-[5/4]">{paw.imageUrl ? <Image src={paw.imageUrl} alt={`${paw.name}${paw.breed ? `, ${paw.breed}` : ""}`} fill priority sizes="(max-width: 1024px) 100vw, 55vw" className="object-cover"/> : <ImageIcon size={52} className="text-[var(--primary)]"/>}<span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1.5 text-xs font-bold text-[var(--cocoa)] shadow-sm">Paw ID · {paw.code}</span></div>
       <div className="flex min-w-0 flex-col justify-center py-1 lg:py-2"><p className="eyebrow">Published community record</p><h1 className="page-title mt-4">{paw.name}</h1><p className="mt-2 text-lg text-[var(--muted)]">{paw.breed || "Breed unknown"}</p><dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 border-y border-[var(--line)] py-5 text-sm"><div><dt className="text-[var(--muted)]">Estimated age</dt><dd className="mt-1 font-bold">{paw.estimatedAge || "Unknown"}</dd></div><div><dt className="text-[var(--muted)]">Sex</dt><dd className="mt-1 font-bold">{label(paw.sex)}</dd></div><div><dt className="text-[var(--muted)]">Size</dt><dd className="mt-1 font-bold">{label(paw.size)}</dd></div><div><dt className="text-[var(--muted)]">Approximate area</dt><dd className="mt-1 font-bold">{paw.location}</dd></div></dl><div className="mt-4 rounded-[12px] bg-[var(--primary-soft)] p-4 text-sm leading-6 text-[var(--cocoa)]"><strong>Location privacy:</strong> Only an approximate public locality is shown. Precise discovery coordinates remain restricted.</div><ButtonLink href={`/dashboard/paws/${paw.code}/events/new`} className="mt-4 w-full sm:w-fit">Add a care update</ButtonLink></div>
     </section>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { ChevronRight, Menu, X } from "lucide-react";
+import { ChevronRight, LayoutDashboard, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Brand } from "./brand";
 import { ButtonLink } from "../ui/button";
@@ -15,7 +15,7 @@ const links = [
   { href: "/about#how-it-works", label: "How it works" },
 ];
 
-export function PublicHeader() {
+export function PublicHeader({ viewer = null }: { viewer?: { fullName: string } | null }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -72,19 +72,36 @@ export function PublicHeader() {
 
           {/* Desktop Actions */}
           <div className="hidden items-center gap-2 md:flex">
-            <Link
-              href="/login"
-              className="focus-ring rounded-full px-3.5 py-1.5 text-sm font-semibold text-[var(--cocoa)] transition-colors hover:text-[var(--primary)]"
-            >
-              Sign in
-            </Link>
-            <ButtonLink
-              href="/register"
-              size="sm"
-              className="rounded-full px-4 shadow-xs transition-all hover:scale-[1.02] hover:shadow-sm active:scale-[0.98]"
-            >
-              Join the community
-            </ButtonLink>
+            {viewer ? (
+              <>
+                <span className="max-w-36 truncate text-sm font-semibold text-[var(--muted)]">
+                  {viewer.fullName}
+                </span>
+                <ButtonLink
+                  href="/dashboard"
+                  size="sm"
+                  className="rounded-full px-4 shadow-xs transition-all hover:scale-[1.02] hover:shadow-sm active:scale-[0.98]"
+                >
+                  <LayoutDashboard size={15} /> Workspace
+                </ButtonLink>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="focus-ring rounded-full px-3.5 py-1.5 text-sm font-semibold text-[var(--cocoa)] transition-colors hover:text-[var(--primary)]"
+                >
+                  Sign in
+                </Link>
+                <ButtonLink
+                  href="/register"
+                  size="sm"
+                  className="rounded-full px-4 shadow-xs transition-all hover:scale-[1.02] hover:shadow-sm active:scale-[0.98]"
+                >
+                  Join the community
+                </ButtonLink>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -131,23 +148,34 @@ export function PublicHeader() {
                 );
               })}
 
-              <div className="mt-3 grid grid-cols-2 gap-2.5 border-t border-[var(--line)] pt-3.5">
-                <ButtonLink
-                  href="/login"
-                  variant="secondary"
-                  className="rounded-xl"
-                  onClick={() => setOpen(false)}
-                >
-                  Sign in
-                </ButtonLink>
-                <ButtonLink
-                  href="/register"
-                  className="rounded-xl shadow-xs"
-                  onClick={() => setOpen(false)}
-                >
-                  Join us
-                </ButtonLink>
-              </div>
+              {viewer ? (
+                <div className="mt-3 border-t border-[var(--line)] pt-3.5">
+                  <p className="mb-2 truncate px-1 text-xs font-semibold text-[var(--muted)]">
+                    Signed in as {viewer.fullName}
+                  </p>
+                  <ButtonLink href="/dashboard" className="w-full rounded-xl shadow-xs" onClick={() => setOpen(false)}>
+                    <LayoutDashboard size={16} /> Open workspace
+                  </ButtonLink>
+                </div>
+              ) : (
+                <div className="mt-3 grid grid-cols-2 gap-2.5 border-t border-[var(--line)] pt-3.5">
+                  <ButtonLink
+                    href="/login"
+                    variant="secondary"
+                    className="rounded-xl"
+                    onClick={() => setOpen(false)}
+                  >
+                    Sign in
+                  </ButtonLink>
+                  <ButtonLink
+                    href="/register"
+                    className="rounded-xl shadow-xs"
+                    onClick={() => setOpen(false)}
+                  >
+                    Join us
+                  </ButtonLink>
+                </div>
+              )}
             </nav>
           </div>
         </div>
