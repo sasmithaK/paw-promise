@@ -37,7 +37,7 @@ export const dogRegistrationSchema = z.object({
   distinguishingFeatures: optionalText(1000),
   foundAt: z.iso.datetime({ offset: true }),
   foundLocationLabel: z.string().trim().min(1).max(200),
-  coordinates: coordinatesSchema.nullable().optional(),
+  coordinates: coordinatesSchema,
   discoveryDescription: optionalText(2000),
   initialObservation: optionalText(2000),
   vaccinationStatus: z.enum(["UNKNOWN", "REPORTED", "EVIDENCE_ATTACHED"]).default("UNKNOWN"),

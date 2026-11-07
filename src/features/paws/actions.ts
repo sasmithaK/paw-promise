@@ -300,6 +300,7 @@ export async function createPawEventAction(formData: FormData): Promise<PawEvent
     description: formData.get("description") || undefined,
     occurredAt: formData.get("occurredAt"),
     locationLabel: formData.get("locationLabel") || undefined,
+    coordinates: parseJsonField(formData, "coordinates", null),
     visibility: formData.get("visibility"),
     participants: parseJsonField(formData, "participants", []),
     details: parseJsonField(formData, "details", {}),
@@ -338,6 +339,9 @@ export async function createPawEventAction(formData: FormData): Promise<PawEvent
     p_occurred_at: value.occurredAt,
     p_location_label: value.locationLabel || "",
     p_visibility: value.visibility,
+    p_latitude: value.coordinates?.latitude ?? null,
+    p_longitude: value.coordinates?.longitude ?? null,
+    p_location_accuracy_m: value.coordinates?.accuracyMeters ?? null,
     p_details: value.details as Json,
     p_participants: value.participants as Json,
     p_attachments: uploaded as Json,
@@ -348,6 +352,7 @@ export async function createPawEventAction(formData: FormData): Promise<PawEvent
   }
   revalidatePath("/activities");
   revalidatePath("/paws");
+  revalidatePath("/dashboard/paws");
   return { ok: true, eventId: data };
 }
 

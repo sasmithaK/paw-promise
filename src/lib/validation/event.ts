@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { coordinatesSchema } from "@/lib/validation/dog-registration";
 
 const optionalText = (maximum: number) => z.string().trim().max(maximum).optional();
 
@@ -16,6 +17,7 @@ const eventBaseSchema = z.object({
     "The event time cannot be in the future.",
   ),
   locationLabel: optionalText(200),
+  coordinates: coordinatesSchema.nullable().optional(),
   visibility: z.enum(["PUBLIC", "MEMBERS", "PRIVATE"]).default("PUBLIC"),
   participants: z.array(participantSchema).max(20).default([]),
 });

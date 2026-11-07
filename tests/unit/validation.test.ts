@@ -26,6 +26,10 @@ describe("dog registration validation", () => {
     expect(result.success).toBe(false);
   });
 
+  it("requires an exact discovery location", () => {
+    expect(dogRegistrationSchema.safeParse({ ...validRegistration, coordinates: undefined }).success).toBe(false);
+  });
+
   it("accepts multiple discovery participants", () => {
     expect(dogRegistrationSchema.safeParse({
       ...validRegistration,
@@ -100,6 +104,18 @@ describe("event validation", () => {
       occurredAt: "2099-01-01T00:00:00+00:00",
       details: {},
     }).success).toBe(false);
+  });
+
+  it("accepts an optional accurate event location", () => {
+    expect(eventCreationSchema.safeParse({
+      dogId: "00000000-0000-4000-8000-000000000001",
+      eventType: "SIGHTING",
+      title: "Seen near the community hall",
+      occurredAt: "2026-11-06T08:30:00+05:30",
+      locationLabel: "Community hall",
+      coordinates: { latitude: 7.145678, longitude: 80.123456, accuracyMeters: 12 },
+      details: { observedCondition: "Alert" },
+    }).success).toBe(true);
   });
 
   it("requires a reason for moderator corrections", () => {
