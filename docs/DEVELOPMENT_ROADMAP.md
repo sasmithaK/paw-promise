@@ -86,6 +86,10 @@ attach evidence belonging to another account.
 - [x] Build due and overdue views with status transitions and completion timestamps
 - [x] Keep direct Data API follow-up assignments under restrictive RLS
 - [x] Complete the publish, reject, and request-changes moderation queue
+- [x] Make publication retry-safe and commit photo visibility plus profile status atomically
+- [x] Require actionable notes for rejection and change requests
+- [x] Return inline moderation outcomes instead of routing expected failures to the global error page
+- [x] Return inline outcomes for follow-up, report, account-status, and role mutations
 - [x] Add conservative duplicate-candidate suggestions without automatic merging
 - [x] Add the moderator community-report queue and resolution workflow
 - [x] Add Super Admin account suspension, disabling, and reactivation
@@ -97,12 +101,15 @@ attach evidence belonging to another account.
 Milestone 5 is complete in code and in the hosted development database. The
 follow-up, report, and account-management RPCs independently verify the current
 session and role. Registration and report quotas are also enforced by RLS so a
-direct Data API caller cannot bypass the application actions.
+direct Data API caller cannot bypass the application actions. Moderation keeps
+the private source photograph, copies the approved image idempotently, and then
+commits photo visibility and profile publication in one audited transaction.
 
 ### Verification snapshot — 2026-11-07
 
 - TypeScript, ESLint, unit tests, and the production build pass.
 - Hosted auth, registry, event-history, and Milestone 5 transaction suites pass and roll back their fixtures.
+- The auth proxy refreshes cookies on public and protected routes; public navigation reflects the current member session and links back to the workspace.
 - Desktop/mobile Playwright smoke tests are data-independent and pass against
   the Vercel testing deployment using an installed browser channel.
 - Supabase security advisors report only the hosted Auth setting for leaked
