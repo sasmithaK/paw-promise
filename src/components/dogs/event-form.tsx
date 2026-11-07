@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useForm, useWatch } from "react-hook-form";
-import { CheckCircle2, Droplets, FileUp, MapPin, Plus, Trash2, Users } from "lucide-react";
+import { CheckCircle2, Droplets, FileUp, LocateFixed, MapPin, Plus, Trash2, Users } from "lucide-react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { createPawEventAction } from "@/features/paws/actions";
 
@@ -16,6 +17,12 @@ type Draft = {
   procedureStatus: "COMPLETED" | "SCHEDULED" | "UNKNOWN"; rescueOutcome: string; destination: string; category: string;
 };
 type Participant = { name: string; context: string };
+type Coordinates = { latitude: number; longitude: number; accuracyMeters?: number };
+
+const LocationPicker = dynamic(() => import("@/components/maps/location-picker").then(module => module.LocationPicker), {
+  ssr: false,
+  loading: () => <div className="grid h-64 place-items-center bg-[#e7e5dc] text-sm font-semibold text-[var(--muted)]">Loading map…</div>,
+});
 
 const controlClass = "h-11 w-full rounded-[10px] border border-[var(--line)] bg-white px-3";
 const textAreaClass = "min-h-28 rounded-[10px] border border-[var(--line)] bg-white p-3 font-normal";
@@ -28,6 +35,9 @@ export function EventForm({ dogId, pawCode, pawName }: { dogId: string; pawCode:
   const [pending, setPending] = useState(false);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [locationMessage, setLocationMessage] = useState<string | null>(null);
   const { register, handleSubmit, control: formControl } = useForm<Draft>({
     defaultValues: {
       eventType: "FEEDING", occurredAt: localDateTime(), visibility: "PUBLIC", waterProvided: false,
@@ -38,6 +48,19 @@ export function EventForm({ dogId, pawCode, pawName }: { dogId: string; pawCode:
 
   function updateParticipant(index: number, field: keyof Participant, value: string) {
     setParticipants(current => current.map((participant, participantIndex) => participantIndex === index ? { ...participant, [field]: value } : participant));
+  }
+
+  function useCurrentLocation() {
+    setShowLocationPicker(true);
+    setLocationMessage("Requesting your location…");
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        setCoordinates({ latitude: position.coords.latitude, longitude: position.coords.longitude, accuracyMeters: Math.round(position.coords.accuracy) });
+        setLocationMessage(`Accurate point captured to approximately ${Math.round(position.coords.accuracy)} metres.`);
+      },
+      () => setLocationMessage("Device location was unavailable. Tap the map to place the point manually."),
+      { enableHighAccuracy: true, timeout: 12000 },
+    );
   }
 
   async function submit(value: Draft) {
@@ -62,6 +85,7 @@ export function EventForm({ dogId, pawCode, pawName }: { dogId: string; pawCode:
     payload.set("description", value.description || "");
     payload.set("occurredAt", new Date(value.occurredAt).toISOString());
     payload.set("locationLabel", value.locationLabel || "");
+    payload.set("coordinates", JSON.stringify(coordinates));
     payload.set("visibility", value.visibility);
     payload.set("details", JSON.stringify(details));
     payload.set("participants", JSON.stringify(participants.filter(participant => participant.name.trim())));
@@ -90,7 +114,7 @@ export function EventForm({ dogId, pawCode, pawName }: { dogId: string; pawCode:
       {eventType === "RESCUE" && <div className="grid gap-5 sm:grid-cols-2"><label className="grid gap-2 text-sm font-bold">Rescue outcome<input {...register("rescueOutcome", { required: true })} className={controlClass} placeholder="Moved safely from the road"/></label><label className="grid gap-2 text-sm font-bold">Destination<input {...register("destination")} className={controlClass} placeholder="Temporary foster home"/></label></div>}
       {eventType === "GENERAL_UPDATE" && <label className="grid gap-2 text-sm font-bold">Update category<input {...register("category")} className={controlClass} placeholder="Behaviour, shelter, identification…"/></label>}
 
-      <label className="grid gap-2 text-sm font-bold">Approximate location<span className="text-xs font-normal text-[var(--muted)]">Optional; never enter a private address.</span><span className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--primary)]" size={17}/><input {...register("locationLabel")} className={`${controlClass} pl-10`} placeholder="Tholangamuwa area"/></span></label>
+      <section className="overflow-hidden rounded-[12px] border border-[var(--line)]"><div className="grid gap-4 bg-white p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end"><label className="grid gap-2 text-sm font-bold">Location label<span className="text-xs font-normal text-[var(--muted)]">Optional. Add an exact point when this update records where the pup was seen or cared for.</span><span className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--primary)]" size={17}/><input {...register("locationLabel")} className={`${controlClass} pl-10`} placeholder="Tholangamuwa community hall"/></span></label><div className="flex flex-wrap gap-2"><Button type="button" variant="secondary" size="sm" onClick={() => setShowLocationPicker(current => !current)}><MapPin size={16}/>{showLocationPicker ? "Hide map" : "Choose on map"}</Button><Button type="button" variant="secondary" size="sm" onClick={useCurrentLocation}><LocateFixed size={16}/>Use my location</Button></div></div>{showLocationPicker && <LocationPicker value={coordinates} onChange={value => { setCoordinates(value); setLocationMessage("Exact point selected. Only active signed-in members can view it."); }}/>}<div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--line)] bg-[#fff8f2] px-4 py-3 text-xs text-[var(--muted)]"><span>{coordinates ? `${coordinates.latitude.toFixed(5)}, ${coordinates.longitude.toFixed(5)}${coordinates.accuracyMeters ? ` · ±${coordinates.accuracyMeters} m` : ""}` : "No map point selected"}</span>{coordinates && <button type="button" className="font-bold text-[var(--terracotta)]" onClick={() => { setCoordinates(null); setLocationMessage("Map point removed."); }}>Remove point</button>}</div>{locationMessage && <p className="border-t border-[var(--line)] px-4 py-3 text-xs text-[var(--muted)]" role="status">{locationMessage}</p>}</section>
 
       <fieldset className="grid gap-3 border-t border-[var(--line)] pt-5"><legend className="flex items-center gap-2 text-sm font-bold"><Users size={17}/>Other people present</legend><p className="text-xs leading-5 text-[var(--muted)]">Names are restricted to the contributor and moderators. Add someone only with their permission.</p>{participants.map((participant, index) => <div key={index} className="grid gap-2 rounded-[10px] bg-[#f8eee6] p-3 sm:grid-cols-[1fr_1fr_auto]"><input aria-label={`Participant ${index + 1} name`} value={participant.name} onChange={event => updateParticipant(index, "name", event.target.value)} className={controlClass} placeholder="Name"/><input aria-label={`Participant ${index + 1} context`} value={participant.context} onChange={event => updateParticipant(index, "context", event.target.value)} className={controlClass} placeholder="Volunteer, local resident…"/><button type="button" onClick={() => setParticipants(current => current.filter((_, participantIndex) => participantIndex !== index))} className="focus-ring grid size-11 place-items-center rounded-[10px] text-[var(--muted)] hover:bg-white" aria-label={`Remove participant ${index + 1}`}><Trash2 size={17}/></button></div>)}<button type="button" onClick={() => setParticipants(current => [...current, { name: "", context: "" }])} className="focus-ring flex w-fit items-center gap-2 text-sm font-bold text-[var(--primary-hover)]"><Plus size={16}/>Add participant</button></fieldset>
 
