@@ -58,6 +58,9 @@ begin
   if (select count(id) from public.dog_events where created_by = auth.uid() and event_type = 'DISCOVERY') <> 1 then
     raise exception 'FAIL: registration did not create the discovery event';
   end if;
+  if (select count(id) from public.dog_events where created_by = auth.uid() and event_type = 'DISCOVERY' and location is not null and location_accuracy_m = 12) <> 1 then
+    raise exception 'FAIL: registration did not preserve the exact discovery point and accuracy';
+  end if;
   if (select count(*) from public.event_participants ep join public.dog_events e on e.id = ep.event_id where e.created_by = auth.uid()) <> 2 then
     raise exception 'FAIL: registration did not preserve contributor and witness participants';
   end if;
@@ -114,6 +117,13 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.role', 'authenticated', true);
 select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-000000000002', true);
+
+do $$
+begin
+  if (select count(*) from public.get_paw_location_points((select id from public.dogs where name = 'Milestone Pup'))) <> 1 then
+    raise exception 'FAIL: active member cannot read the published exact discovery point';
+  end if;
+end $$;
 
 insert into public.dog_events (dog_id, event_type, title, occurred_at, details, visibility, created_by)
 values (

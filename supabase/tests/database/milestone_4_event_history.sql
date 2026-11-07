@@ -31,8 +31,17 @@ end $$;
 
 do $$
 begin
-  if has_function_privilege('anon', 'public.create_paw_event(uuid, public.dog_event_type, text, text, timestamptz, text, public.record_visibility, jsonb, jsonb, jsonb)', 'EXECUTE') then
+  if has_function_privilege('anon', 'public.create_paw_event(uuid, public.dog_event_type, text, text, timestamptz, text, public.record_visibility, double precision, double precision, integer, jsonb, jsonb, jsonb)', 'EXECUTE') then
     raise exception 'FAIL: anonymous role can execute authenticated event RPC';
+  end if;
+  if has_function_privilege('anon', 'public.get_paw_location_points(uuid)', 'EXECUTE') then
+    raise exception 'FAIL: anonymous role can execute the member location RPC';
+  end if;
+  if has_column_privilege('anon', 'public.dog_events', 'location', 'SELECT') then
+    raise exception 'FAIL: anonymous role can select exact event coordinates';
+  end if;
+  if not has_column_privilege('authenticated', 'public.dog_events', 'location', 'SELECT') then
+    raise exception 'FAIL: authenticated role cannot select authorised exact event coordinates';
   end if;
   if has_function_privilege('anon', 'public.correct_paw_event(uuid, text, text, text, timestamptz, text, public.record_visibility, public.verification_status)', 'EXECUTE') then
     raise exception 'FAIL: anonymous role can execute moderator correction RPC';
@@ -51,6 +60,9 @@ select public.create_paw_event(
   p_occurred_at => now(),
   p_location_label => 'Test clinic area',
   p_visibility => 'PUBLIC',
+  p_latitude => 7.145678,
+  p_longitude => 80.123456,
+  p_location_accuracy_m => 12,
   p_details => '{"providerName":"Test Clinic","visitOutcome":"Follow-up recommended"}'::jsonb,
   p_participants => '[{"name":"Test Witness","context":"Volunteer"}]'::jsonb,
   p_attachments => '[{"storagePath":"30000000-0000-4000-8000-000000000002/event-test.pdf","attachmentType":"application/pdf"}]'::jsonb
@@ -78,6 +90,9 @@ do $$
 begin
   if (select count(*) from public.dog_events where title = 'Clinic assessment') <> 1 then
     raise exception 'FAIL: authenticated member cannot read a public published event';
+  end if;
+  if (select count(*) from public.get_paw_location_points((select id from public.dogs where name = 'Milestone Four Pup')) where accuracy_m = 12) <> 1 then
+    raise exception 'FAIL: authenticated member cannot read the exact event point';
   end if;
   if (select count(*) from public.event_participants) <> 0 then
     raise exception 'FAIL: participant identity leaked to a different member';
@@ -134,13 +149,16 @@ begin
   begin
     perform public.create_paw_event(
       (select id from public.dogs where name = 'Milestone Four Pup'),
-      'SIGHTING', 'Blocked update', '', now(), '', 'PUBLIC', '{}'::jsonb, '[]'::jsonb, '[]'::jsonb
+      'SIGHTING', 'Blocked update', '', now(), '', 'PUBLIC', 7.1, 80.1, 10, '{}'::jsonb, '[]'::jsonb, '[]'::jsonb
     );
     raise exception 'FAIL: suspended member created an event';
   exception
     when others then
       if sqlerrm = 'FAIL: suspended member created an event' then raise; end if;
   end;
+  if (select count(*) from public.get_paw_location_points((select id from public.dogs where name = 'Milestone Four Pup'))) <> 0 then
+    raise exception 'FAIL: suspended member can read exact location points';
+  end if;
 end $$;
 
 reset role;
