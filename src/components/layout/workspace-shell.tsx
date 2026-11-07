@@ -5,6 +5,7 @@ import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
+  Archive,
   ClipboardCheck,
   Dog,
   LayoutDashboard,
@@ -35,6 +36,7 @@ const memberLinks = [
 const adminLinks = [
   { href: "/admin/moderation", label: "Review queue", icon: ShieldCheck },
   { href: "/admin/reports", label: "Reports", icon: Flag },
+  { href: "/admin/archived", label: "Archived paws", icon: Archive },
   { href: "/admin", label: "Admin overview", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/audit", label: "Audit history", icon: ClipboardCheck },

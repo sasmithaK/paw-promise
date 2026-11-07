@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Compass, ImageIcon, Plus, ShieldCheck } from "lucide-react";
+import { Archive, ArrowRight, Compass, ImageIcon, Plus } from "lucide-react";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { ButtonLink } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -30,7 +30,8 @@ export default async function ManagedPawsPage({
     )
     .order("created_at", { ascending: false });
 
-  if (!showAll) query = query.eq("created_by", identity.id);
+  if (showAll) query = query.neq("record_status", "ARCHIVED");
+  else query = query.eq("created_by", identity.id);
 
   const { data, error } = await query;
   if (error) throw new Error(`Unable to load paw profiles: ${error.message}`);
@@ -101,6 +102,7 @@ export default async function ManagedPawsPage({
           >
             My introductions
           </Link>
+          <Link href="/admin/archived" className="ml-auto inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold text-[var(--muted)] hover:text-[var(--charcoal)]"><Archive size={15}/>Archived paws</Link>
         </div>
       )}
 
@@ -154,7 +156,7 @@ export default async function ManagedPawsPage({
                     tone={
                       paw.record_status === "PUBLISHED"
                         ? "sage"
-                        : paw.record_status === "REJECTED" || paw.changes_requested_note
+                        : paw.record_status === "REJECTED" || paw.record_status === "ARCHIVED" || paw.changes_requested_note
                           ? "red"
                           : "amber"
                     }
@@ -169,19 +171,12 @@ export default async function ManagedPawsPage({
                 </div>
 
                 <div className="flex justify-end">
-                  {paw.record_status === "PUBLISHED" || paw.created_by === identity.id ? (
+                  {isStaff || paw.record_status === "PUBLISHED" || paw.created_by === identity.id ? (
                     <Link
                       href={targetHref}
                       className="inline-flex items-center gap-1 rounded-[8px] bg-[var(--primary-soft)] px-3 py-1.5 text-xs font-bold text-[var(--primary-hover)] transition-colors hover:bg-[var(--primary)] hover:text-white"
                     >
-                      {paw.record_status === "PENDING" ? "Edit profile" : "View record"} <ArrowRight size={14} />
-                    </Link>
-                  ) : isStaff ? (
-                    <Link
-                      href="/admin/moderation"
-                      className="inline-flex items-center gap-1 rounded-[8px] bg-[#fff0e5] px-3 py-1.5 text-xs font-bold text-[var(--primary-hover)] transition-colors hover:bg-[var(--primary)] hover:text-white"
-                    >
-                      <ShieldCheck size={14} /> Review queue
+                      {paw.record_status === "PENDING" && paw.created_by === identity.id ? "Edit profile" : "View record"} <ArrowRight size={14} />
                     </Link>
                   ) : (
                     <span className="text-xs italic text-[var(--muted)]">Awaiting review</span>
