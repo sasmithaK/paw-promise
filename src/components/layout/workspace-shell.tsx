@@ -5,7 +5,6 @@ import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
-  Bell,
   ClipboardCheck,
   Dog,
   LayoutDashboard,
@@ -13,6 +12,7 @@ import {
   LogOut,
   Menu,
   PawPrint,
+  Flag,
   Plus,
   Settings,
   ShieldCheck,
@@ -34,6 +34,7 @@ const memberLinks = [
 
 const adminLinks = [
   { href: "/admin/moderation", label: "Review queue", icon: ShieldCheck },
+  { href: "/admin/reports", label: "Reports", icon: Flag },
   { href: "/admin", label: "Admin overview", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/audit", label: "Audit history", icon: ClipboardCheck },
@@ -41,7 +42,6 @@ const adminLinks = [
 
 export function WorkspaceShell({
   children,
-  admin = false,
 }: {
   children: React.ReactNode;
   admin?: boolean;
