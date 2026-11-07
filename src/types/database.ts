@@ -65,6 +65,7 @@ export type Database = {
           event_type: Database["public"]["Enums"]["dog_event_type"]
           id: string
           location: unknown
+          location_accuracy_m: number | null
           location_label: string | null
           occurred_at: string
           title: string
@@ -81,6 +82,7 @@ export type Database = {
           event_type: Database["public"]["Enums"]["dog_event_type"]
           id?: string
           location?: unknown
+          location_accuracy_m?: number | null
           location_label?: string | null
           occurred_at: string
           title: string
@@ -97,6 +99,7 @@ export type Database = {
           event_type?: Database["public"]["Enums"]["dog_event_type"]
           id?: string
           location?: unknown
+          location_accuracy_m?: number | null
           location_label?: string | null
           occurred_at?: string
           title?: string
@@ -986,12 +989,28 @@ export type Database = {
           p_dog_id: string
           p_event_type: Database["public"]["Enums"]["dog_event_type"]
           p_location_label: string
+          p_latitude: number | null
+          p_location_accuracy_m: number | null
+          p_longitude: number | null
           p_occurred_at: string
           p_participants?: Json
           p_title: string
           p_visibility: Database["public"]["Enums"]["record_visibility"]
         }
         Returns: string
+      }
+      get_paw_location_points: {
+        Args: { p_dog_id: string }
+        Returns: {
+          accuracy_m: number
+          event_id: string
+          event_type: Database["public"]["Enums"]["dog_event_type"]
+          latitude: number
+          location_label: string
+          longitude: number
+          occurred_at: string
+          title: string
+        }[]
       }
       moderate_paw: {
         Args: { p_decision: string; p_dog_id: string; p_note?: string }
