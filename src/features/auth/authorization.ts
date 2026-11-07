@@ -9,7 +9,6 @@ export type AccountStatus = Database["public"]["Enums"]["account_status"];
 
 export type AuthenticatedIdentity = {
   id: string;
-  email: string | null;
   fullName: string;
   accountStatus: AccountStatus;
   roles: AppRole[];
@@ -31,7 +30,6 @@ export async function getAuthenticatedIdentity(): Promise<AuthenticatedIdentity 
 
   return {
     id: userId,
-    email: typeof claimsData.claims.email === "string" ? claimsData.claims.email : null,
     fullName: profile.full_name,
     accountStatus: profile.account_status,
     roles: roleRows.map(({ role }) => role),
