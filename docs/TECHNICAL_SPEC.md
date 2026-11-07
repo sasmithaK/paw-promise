@@ -232,6 +232,8 @@ public self-selection of privileged roles.
   Add event to published dog          No      Yes         Yes           Yes
   Edit own pending submission         No      Yes         Yes           Yes
   Review/publish dog                  No       No         Yes           Yes
+  Archive/remove dog                  No       No         Yes           Yes
+  Restore archived dog                No       No          No           Yes
   Manage other users                  No       No     Limited           Yes
   Assign/revoke roles                 No       No          No           Yes
   Suspend accounts                    No       No     Limited           Yes
@@ -249,6 +251,11 @@ public self-selection of privileged roles.
 -   A member may add events to a published dog, but cannot alter or
     delete another person's historical event.
 -   Only moderators and Super Admins can change moderation state.
+-   Paw removal is a recoverable archive operation: Moderators cannot
+    archive their own submissions, and only Super Admins can restore an
+    archived profile to pending review. A Super Admin is the final authority
+    for this workflow and does not require approval from another user to
+    archive or restore any profile, including their own submission.
 -   Only Super Admins can change roles.
 -   Admin actions must be recorded in `audit_logs`.
 -   Enforce permissions in PostgreSQL RLS and server-side application
@@ -1234,6 +1241,10 @@ Important validations:
 9.  Event date and submission date are separate.
 10. Dog records with existing events cannot be physically deleted
     through normal UI.
+    Staff removal changes the record to `ARCHIVED`, preserves the permanent
+    Paw ID and history, cancels open follow-ups, records the reason, and
+    removes approved public photograph copies. Storage cleanup failures must
+    remain visible and retryable before restoration.
 11. A possible duplicate should prompt a review rather than silently
     merge records.
 12. Suspended accounts cannot create new contributions.

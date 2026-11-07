@@ -95,6 +95,11 @@ attach evidence belonging to another account.
 - [x] Add Super Admin account suspension, disabling, and reactivation
 - [x] Add Super Admin role grant and revocation with self-protection
 - [x] Require reasons and audit role, account-status, report, and follow-up changes
+- [x] Add audited, recoverable paw archival for Moderators and Super Admins
+- [x] Cancel open follow-ups and retry public-photo cleanup during archival
+- [x] Add Super Admin-only restoration to independent pending review
+- [x] Keep Super Admin archival and restoration independent of secondary approval
+- [x] Add an archived-record administration view and hosted permission test
 - [x] Add a hosted transactional Milestone 5 permission test
 - [x] Regenerate database TypeScript types from the hosted development schema
 
@@ -104,6 +109,9 @@ session and role. Registration and report quotas are also enforced by RLS so a
 direct Data API caller cannot bypass the application actions. Moderation keeps
 the private source photograph, copies the approved image idempotently, and then
 commits photo visibility and profile publication in one audited transaction.
+Paw removal is implemented as archival rather than physical deletion so
+permanent IDs and append-only histories remain intact. Public photo cleanup is
+tracked independently and must finish before a Super Admin can restore a record.
 
 ### Verification snapshot — 2026-11-07
 
