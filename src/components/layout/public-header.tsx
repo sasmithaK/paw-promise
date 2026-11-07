@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
-import { ChevronRight, LayoutDashboard, Menu, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { ChevronRight, LayoutDashboard, LoaderCircle, LogOut, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 import { Brand } from "./brand";
-import { ButtonLink } from "../ui/button";
+import { Button, ButtonLink } from "../ui/button";
 
 const links = [
   { href: "/", label: "Home" },
@@ -17,7 +18,18 @@ const links = [
 
 export function PublicHeader({ viewer = null }: { viewer?: { fullName: string } | null }) {
   const [open, setOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function signOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    await createClient().auth.signOut({ scope: "local" });
+    setOpen(false);
+    router.replace("/");
+    router.refresh();
+  }
 
   useEffect(() => {
     function handleResize() {
@@ -84,6 +96,17 @@ export function PublicHeader({ viewer = null }: { viewer?: { fullName: string } 
                 >
                   <LayoutDashboard size={15} /> Workspace
                 </ButtonLink>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="quiet"
+                  disabled={signingOut}
+                  onClick={signOut}
+                  className="rounded-full px-3 text-[var(--muted)] hover:text-[var(--cocoa)]"
+                >
+                  {signingOut ? <LoaderCircle className="animate-spin" size={15} /> : <LogOut size={15} />}
+                  Sign out
+                </Button>
               </>
             ) : (
               <>
@@ -156,6 +179,16 @@ export function PublicHeader({ viewer = null }: { viewer?: { fullName: string } 
                   <ButtonLink href="/dashboard" className="w-full rounded-xl shadow-xs" onClick={() => setOpen(false)}>
                     <LayoutDashboard size={16} /> Open workspace
                   </ButtonLink>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={signingOut}
+                    onClick={signOut}
+                    className="mt-2 w-full rounded-xl"
+                  >
+                    {signingOut ? <LoaderCircle className="animate-spin" size={16} /> : <LogOut size={16} />}
+                    {signingOut ? "Signing out…" : "Sign out"}
+                  </Button>
                 </div>
               ) : (
                 <div className="mt-3 grid grid-cols-2 gap-2.5 border-t border-[var(--line)] pt-3.5">
