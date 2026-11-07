@@ -39,57 +39,61 @@ export async function createFollowUpAction(_previous: ActionResult, formData: Fo
   return { ok: true, message: "Follow-up created." };
 }
 
-export async function updateFollowUpStatusAction(formData: FormData): Promise<void> {
+export async function updateFollowUpStatusAction(_previous: ActionResult, formData: FormData): Promise<ActionResult> {
   await requireActiveIdentity();
   const parsed = followUpStatusSchema.safeParse({ followUpId: formData.get("followUpId"), status: formData.get("status") });
-  if (!parsed.success) throw new Error("Invalid follow-up update.");
+  if (!parsed.success) return { ok: false, message: "Review the follow-up status." };
   const supabase = await createClient();
   const { error } = await supabase.rpc("update_follow_up_status" as never, {
     p_follow_up_id: parsed.data.followUpId,
     p_status: parsed.data.status,
   } as never);
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, message: "The follow-up could not be updated. Refresh and try again." };
   revalidatePath("/follow-ups");
+  return { ok: true, message: "Follow-up status updated." };
 }
 
-export async function resolveReportAction(formData: FormData): Promise<void> {
+export async function resolveReportAction(_previous: ActionResult, formData: FormData): Promise<ActionResult> {
   await requireModeratorIdentity();
   const parsed = reportResolutionSchema.safeParse({
     reportId: formData.get("reportId"), status: formData.get("status"), resolutionNote: formData.get("resolutionNote"),
   });
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message || "Invalid report decision.");
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message || "Review the report decision." };
   const supabase = await createClient();
   const { error } = await supabase.rpc("resolve_community_report" as never, {
     p_report_id: parsed.data.reportId, p_status: parsed.data.status, p_resolution_note: parsed.data.resolutionNote,
   } as never);
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, message: "The report decision could not be saved. Refresh and try again." };
   revalidatePath("/admin");
   revalidatePath("/admin/reports");
   revalidatePath("/admin/audit");
+  return { ok: true, message: "Report decision saved." };
 }
 
-export async function setAccountStatusAction(formData: FormData): Promise<void> {
+export async function setAccountStatusAction(_previous: ActionResult, formData: FormData): Promise<ActionResult> {
   await requireSuperAdminIdentity();
   const parsed = accountStatusSchema.safeParse({ userId: formData.get("userId"), status: formData.get("status"), reason: formData.get("reason") });
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message || "Invalid account update.");
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message || "Review the account update." };
   const supabase = await createClient();
   const { error } = await supabase.rpc("set_member_account_status" as never, {
     p_user_id: parsed.data.userId, p_status: parsed.data.status, p_reason: parsed.data.reason,
   } as never);
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, message: "The account status could not be updated. Refresh and try again." };
   revalidatePath("/admin/users");
   revalidatePath("/admin/audit");
+  return { ok: true, message: "Account status updated." };
 }
 
-export async function setMemberRoleAction(formData: FormData): Promise<void> {
+export async function setMemberRoleAction(_previous: ActionResult, formData: FormData): Promise<ActionResult> {
   await requireSuperAdminIdentity();
   const parsed = roleChangeSchema.safeParse({ userId: formData.get("userId"), role: formData.get("role"), enabled: formData.get("enabled"), reason: formData.get("reason") });
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message || "Invalid role update.");
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message || "Review the role update." };
   const supabase = await createClient();
   const { error } = await supabase.rpc("set_member_role" as never, {
     p_user_id: parsed.data.userId, p_role: parsed.data.role, p_enabled: parsed.data.enabled, p_reason: parsed.data.reason,
   } as never);
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, message: "The member role could not be updated. Refresh and try again." };
   revalidatePath("/admin/users");
   revalidatePath("/admin/audit");
+  return { ok: true, message: "Member role updated." };
 }
