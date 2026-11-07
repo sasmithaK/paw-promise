@@ -9,6 +9,7 @@ import { Brand } from "./brand";
 import { ButtonLink } from "../ui/button";
 
 const links = [
+  { href: "/", label: "Home" },
   { href: "/paws", label: "Meet the pups" },
   { href: "/about", label: "About" },
   { href: "/about#how-it-works", label: "How it works" },
