@@ -3,7 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { requireActiveIdentity, requireModeratorIdentity } from "@/features/auth/authorization";
+import { requireActiveIdentity, requireModeratorIdentity, requireSuperAdminIdentity } from "@/features/auth/authorization";
 import { createClient } from "@/lib/supabase/server";
 import { dogRegistrationSchema } from "@/lib/validation/dog-registration";
 import { eventCorrectionSchema, eventCreationSchema, eventReportSchema } from "@/lib/validation/event";
@@ -87,6 +87,7 @@ function revalidateModerationViews() {
   revalidatePath("/admin");
   revalidatePath("/admin/moderation");
   revalidatePath("/dashboard/paws");
+  revalidatePath("/admin/archived");
 }
 
 export async function moderatePawAction(
@@ -155,6 +156,124 @@ export async function moderatePawAction(
         ? "Paw profile rejected."
         : "Changes requested from the submitting member.",
   };
+}
+
+const pawArchiveSchema = z.object({
+  dogId: z.uuid(),
+  pawCode: z.string().regex(/^PP-\d{6}$/),
+  confirmation: z.string().trim(),
+  category: z.enum(["DUPLICATE", "INCORRECT", "PRIVACY_SAFETY", "TEST_RECORD", "OTHER"]),
+  reason: z.string().trim().min(10, "Explain the removal in at least 10 characters.").max(1000),
+}).refine((value) => value.confirmation.toUpperCase() === value.pawCode, {
+  path: ["confirmation"],
+  message: "Type the complete Paw ID to confirm removal.",
+});
+
+const pawRestoreSchema = z.object({
+  dogId: z.uuid(),
+  pawCode: z.string().regex(/^PP-\d{6}$/),
+  confirmation: z.string().trim(),
+  reason: z.string().trim().min(10, "Explain the restoration in at least 10 characters.").max(1000),
+}).refine((value) => value.confirmation.toUpperCase() === value.pawCode, {
+  path: ["confirmation"],
+  message: "Type the complete Paw ID to confirm restoration.",
+});
+
+export type PawArchiveResult = { ok: boolean; message: string };
+
+function archiveCleanupPaths(value: Json): string[] {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return [];
+  const paths = value.cleanup_paths;
+  return Array.isArray(paths) ? paths.filter((path): path is string => typeof path === "string") : [];
+}
+
+export async function archivePawAction(
+  _previous: PawArchiveResult,
+  formData: FormData,
+): Promise<PawArchiveResult> {
+  await requireModeratorIdentity();
+  const parsed = pawArchiveSchema.safeParse({
+    dogId: formData.get("dogId"),
+    pawCode: formData.get("pawCode"),
+    confirmation: formData.get("confirmation"),
+    category: formData.get("category"),
+    reason: formData.get("reason"),
+  });
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message || "Review the removal details." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("archive_paw", {
+    p_dog_id: parsed.data.dogId,
+    p_category: parsed.data.category,
+    p_reason: parsed.data.reason,
+  });
+  if (error) return { ok: false, message: error.message || "The paw profile could not be removed." };
+
+  const cleanupPaths = archiveCleanupPaths(data);
+  if (cleanupPaths.length) {
+    const { error: cleanupError } = await supabase.storage.from("dog-public-photos").remove(cleanupPaths);
+    if (cleanupError) {
+      revalidateModerationViews();
+      return {
+        ok: true,
+        message: "Paw profile removed from the directory. Public photo cleanup is queued for retry.",
+      };
+    }
+    await supabase.rpc("confirm_paw_archive_cleanup", { p_dog_id: parsed.data.dogId });
+  }
+
+  revalidateModerationViews();
+  revalidatePath(`/dashboard/paws/${parsed.data.pawCode}`);
+  return { ok: true, message: "Paw profile archived. Its permanent ID and history were preserved." };
+}
+
+export async function retryPawArchiveCleanupAction(
+  _previous: PawArchiveResult,
+  formData: FormData,
+): Promise<PawArchiveResult> {
+  await requireModeratorIdentity();
+  const dogId = z.uuid().safeParse(formData.get("dogId"));
+  const pawCode = z.string().regex(/^PP-\d{6}$/).safeParse(formData.get("pawCode"));
+  if (!dogId.success) return { ok: false, message: "The archived profile could not be identified." };
+
+  const supabase = await createClient();
+  const { data: paw } = await supabase.from("dogs").select("record_status").eq("id", dogId.data).maybeSingle();
+  if (paw?.record_status !== "ARCHIVED") return { ok: false, message: "Only archived profiles can retry cleanup." };
+  const { data: photos, error: photoError } = await supabase.from("dog_photos").select("storage_path").eq("dog_id", dogId.data).eq("is_primary", true);
+  if (photoError) return { ok: false, message: "The archived photo records could not be loaded." };
+  const paths = photos.map((photo) => photo.storage_path);
+  if (paths.length) {
+    const { error } = await supabase.storage.from("dog-public-photos").remove(paths);
+    if (error) return { ok: false, message: "Public photo cleanup is still unavailable. Try again later." };
+  }
+  const { error } = await supabase.rpc("confirm_paw_archive_cleanup", { p_dog_id: dogId.data });
+  if (error) return { ok: false, message: "Cleanup finished, but its status could not be confirmed." };
+  revalidateModerationViews();
+  if (pawCode.success) revalidatePath(`/dashboard/paws/${pawCode.data}`);
+  return { ok: true, message: "Public photo cleanup completed." };
+}
+
+export async function restoreArchivedPawAction(
+  _previous: PawArchiveResult,
+  formData: FormData,
+): Promise<PawArchiveResult> {
+  await requireSuperAdminIdentity();
+  const parsed = pawRestoreSchema.safeParse({
+    dogId: formData.get("dogId"),
+    pawCode: formData.get("pawCode"),
+    confirmation: formData.get("confirmation"),
+    reason: formData.get("reason"),
+  });
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message || "Review the restoration details." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("restore_archived_paw", {
+    p_dog_id: parsed.data.dogId,
+    p_reason: parsed.data.reason,
+  });
+  if (error) return { ok: false, message: error.message || "The paw profile could not be restored." };
+  revalidateModerationViews();
+  revalidatePath(`/dashboard/paws/${parsed.data.pawCode}`);
+  return { ok: true, message: "Paw profile restored to pending review." };
 }
 
 export type PawEventResult = { ok: true; eventId: string } | { ok: false; message: string };
