@@ -6,6 +6,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireActiveIdentity } from "@/features/auth/authorization";
 import { publicPhotoUrl } from "@/features/paws/queries";
+import { getPawDisplayName } from "@/lib/dog-code";
 import { createClient } from "@/lib/supabase/server";
 
 const formatDate = (value: string) =>
@@ -141,7 +142,7 @@ export default async function ManagedPawsPage({
                     )}
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate font-bold">{paw.name || "Unnamed pup"}</p>
+                    <p className="truncate font-bold">{getPawDisplayName(paw.name, formattedCode)}</p>
                     <p className="text-xs text-[var(--muted)]">Paw ID · {formattedCode}</p>
                   </div>
                 </div>

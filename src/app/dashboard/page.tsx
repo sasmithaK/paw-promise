@@ -4,6 +4,7 @@ import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { ButtonLink } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireActiveIdentity } from "@/features/auth/authorization";
+import { getPawDisplayName } from "@/lib/dog-code";
 import { createClient } from "@/lib/supabase/server";
 
 const formatDate = (value: string) =>
@@ -128,13 +129,14 @@ export default async function DashboardPage() {
           </div>
           {recent.length ? (
             <div className="divide-y divide-[var(--line)]">
-              {recent.map((item) => (
-                <div key={item.id} className="flex min-w-0 items-center gap-3 p-4 sm:px-5">
+              {recent.map((item) => {
+                const pawName = getPawDisplayName(item.dogs?.name, item.dogs?.dog_code);
+                return <div key={item.id} className="flex min-w-0 items-center gap-3 p-4 sm:px-5">
                   <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--primary)] font-bold text-white">
-                    {(item.dogs?.name || "P")[0]}
+                    {pawName[0]}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="font-bold">{item.dogs?.name || "Unnamed pup"}</p>
+                    <p className="font-bold">{pawName}</p>
                     <p className="truncate text-sm text-[var(--muted)]">{item.title}</p>
                   </div>
                   <div className="shrink-0 text-right">
@@ -143,8 +145,8 @@ export default async function DashboardPage() {
                       {formatDate(item.occurred_at)}
                     </p>
                   </div>
-                </div>
-              ))}
+                </div>;
+              })}
             </div>
           ) : (
             <p className="p-6 text-sm text-[var(--muted)]">No visible care activity yet.</p>
@@ -173,7 +175,7 @@ export default async function DashboardPage() {
                   </div>
                   <p className="mt-2 text-sm text-[var(--muted)]">
                     {item.due_at ? formatDate(item.due_at) : "No due date"} ·{" "}
-                    {item.dogs?.name || "Unnamed pup"}
+                    {getPawDisplayName(item.dogs?.name, item.dogs?.dog_code)}
                   </p>
                 </Link>
               ))}

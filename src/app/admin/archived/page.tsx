@@ -4,6 +4,7 @@ import { Archive, ArrowRight, ImageIcon, ShieldAlert } from "lucide-react";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireModeratorIdentity } from "@/features/auth/authorization";
+import { getPawDisplayName } from "@/lib/dog-code";
 import { createClient } from "@/lib/supabase/server";
 
 const formatDate = (value: string) => new Intl.DateTimeFormat("en-LK", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
@@ -27,7 +28,7 @@ export default async function ArchivedPawsPage() {
       const pawCode = `PP-${String(paw.dog_code).padStart(6, "0")}`;
       return <article key={paw.id} className="card grid gap-4 p-5 lg:grid-cols-[72px_minmax(0,1fr)_auto] lg:items-center">
         <span className="relative grid size-[72px] place-items-center overflow-hidden rounded-[12px] bg-[var(--primary-soft)]">{paw.imageUrl ? <Image src={paw.imageUrl} alt="" fill sizes="72px" className="object-cover"/> : <ImageIcon className="text-[var(--primary)]"/>}</span>
-        <div><div className="flex flex-wrap items-center gap-2"><h2 className="text-lg font-bold">{paw.name || "Unnamed pup"}</h2><StatusBadge tone="red">Archived</StatusBadge>{paw.archive_cleanup_pending && <StatusBadge tone="amber">Photo cleanup pending</StatusBadge>}</div><p className="mt-1 text-sm font-semibold text-[var(--muted)]">{pawCode} · Previously {label(paw.previous_record_status || "PENDING")}</p><p className="mt-3 text-sm leading-6">{paw.archive_reason}</p><p className="mt-2 text-xs text-[var(--muted)]">{paw.archive_category ? label(paw.archive_category) : "Other"} · Removed {paw.archived_at ? formatDate(paw.archived_at) : "recently"} by {paw.archiver?.full_name || "Authorised staff"} · Introduced by {paw.creator?.full_name || "Community member"}</p></div>
+        <div><div className="flex flex-wrap items-center gap-2"><h2 className="text-lg font-bold">{getPawDisplayName(paw.name, pawCode)}</h2><StatusBadge tone="red">Archived</StatusBadge>{paw.archive_cleanup_pending && <StatusBadge tone="amber">Photo cleanup pending</StatusBadge>}</div><p className="mt-1 text-sm font-semibold text-[var(--muted)]">{pawCode} · Previously {label(paw.previous_record_status || "PENDING")}</p><p className="mt-3 text-sm leading-6">{paw.archive_reason}</p><p className="mt-2 text-xs text-[var(--muted)]">{paw.archive_category ? label(paw.archive_category) : "Other"} · Removed {paw.archived_at ? formatDate(paw.archived_at) : "recently"} by {paw.archiver?.full_name || "Authorised staff"} · Introduced by {paw.creator?.full_name || "Community member"}</p></div>
         <Link href={`/dashboard/paws/${pawCode}`} className="focus-ring inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-[var(--line)] bg-white px-4 text-sm font-bold text-[var(--primary-hover)] hover:border-[var(--primary)]">Review record <ArrowRight size={15}/></Link>
       </article>;
     })}</div> : <div className="card mt-7 p-10 text-center"><Archive className="mx-auto text-[var(--primary)]"/><h2 className="mt-4 text-xl font-bold">No archived paw records</h2><p className="mt-2 text-sm text-[var(--muted)]">Records removed by Moderators or Super Admins will appear here.</p></div>}

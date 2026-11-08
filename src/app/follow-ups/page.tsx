@@ -5,6 +5,7 @@ import { ActionFeedbackForm } from "@/components/ui/action-feedback-form";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { requireActiveIdentity } from "@/features/auth/authorization";
 import { updateFollowUpStatusAction } from "@/features/milestone-five/actions";
+import { getPawDisplayName } from "@/lib/dog-code";
 import { createClient } from "@/lib/supabase/server";
 
 const formatDate = (value: string) => new Intl.DateTimeFormat("en-LK", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
@@ -20,7 +21,11 @@ export default async function FollowUpsPage() {
   ]);
   if (taskResult.error || pawResult.error || memberResult.error) throw new Error("Follow-up data could not be loaded.");
   const tasks = taskResult.data || [];
-  const paws = (pawResult.data || []).map((paw) => ({ id: paw.id, label: `PP-${String(paw.dog_code).padStart(6, "0")} · ${paw.name || "Unnamed pup"}` }));
+  const paws = (pawResult.data || []).map((paw) => {
+    const pawCode = `PP-${String(paw.dog_code).padStart(6, "0")}`;
+    const pawName = getPawDisplayName(paw.name, pawCode);
+    return { id: paw.id, label: pawName === pawCode ? pawCode : `${pawCode} · ${pawName}` };
+  });
   const members = (memberResult.data || []).map((member) => ({ id: member.id, label: member.full_name }));
 
   return <WorkspaceShell>
@@ -28,9 +33,10 @@ export default async function FollowUpsPage() {
     <FollowUpForm paws={paws} members={members} currentUserId={identity.id}/>
     {tasks.length ? <div className="mt-7 grid gap-4">{tasks.map((task) => {
       const overdue = Boolean(task.due_at && new Date(task.due_at) < new Date() && !["COMPLETED", "CANCELLED"].includes(task.status));
+      const pawCode = `PP-${String(task.dogs?.dog_code ?? 0).padStart(6, "0")}`;
       return <article key={task.id} className="card flex flex-col gap-5 p-5 lg:flex-row lg:items-center">
         <span className={`grid size-11 shrink-0 place-items-center rounded-[10px] ${overdue ? "bg-[#f4e1dc] text-[var(--terracotta)]" : "bg-[var(--primary-soft)] text-[var(--primary)]"}`}>{overdue ? <Clock3/> : <CalendarDays/>}</span>
-        <div className="flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="font-bold">{task.title}</h2><StatusBadge tone={overdue ? "red" : task.status === "COMPLETED" ? "sage" : "amber"}>{task.status.replaceAll("_", " ")}</StatusBadge></div><p className="mt-1 text-sm text-[var(--muted)]">{task.dogs?.name || "Unnamed pup"} · PP-{String(task.dogs?.dog_code ?? 0).padStart(6, "0")} · {task.due_at ? formatDate(task.due_at) : "No due date"}</p>{task.description && <p className="mt-2 text-sm text-[var(--muted)]">{task.description}</p>}</div>
+        <div className="flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="font-bold">{task.title}</h2><StatusBadge tone={overdue ? "red" : task.status === "COMPLETED" ? "sage" : "amber"}>{task.status.replaceAll("_", " ")}</StatusBadge></div><p className="mt-1 text-sm text-[var(--muted)]">{getPawDisplayName(task.dogs?.name, pawCode)} · {pawCode} · {task.due_at ? formatDate(task.due_at) : "No due date"}</p>{task.description && <p className="mt-2 text-sm text-[var(--muted)]">{task.description}</p>}</div>
         <ActionFeedbackForm action={updateFollowUpStatusAction} submitLabel="Update" pendingLabel="Updating…" variant="secondary" className="flex flex-wrap items-center gap-2">
           <input type="hidden" name="followUpId" value={task.id}/><select name="status" defaultValue={task.status} className="h-10 rounded-[9px] border border-[var(--line)] bg-white px-3 text-sm"><option value="OPEN">Open</option><option value="IN_PROGRESS">In progress</option><option value="COMPLETED">Completed</option><option value="CANCELLED">Cancelled</option></select>
         </ActionFeedbackForm>

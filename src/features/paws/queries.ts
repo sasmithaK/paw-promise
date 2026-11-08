@@ -2,6 +2,7 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import { getPublicSupabaseEnv } from "@/lib/supabase/env";
+import { getPawDisplayName } from "@/lib/dog-code";
 import type { Database } from "@/types/database";
 
 type PublishedPawRow = Database["public"]["Views"]["published_paw_profiles"]["Row"];
@@ -46,7 +47,7 @@ function toPawSummary(row: PublishedPawRow): PawSummary | null {
   return {
     id: row.id,
     code: row.paw_code,
-    name: row.name?.trim() || "Unnamed pup",
+    name: getPawDisplayName(row.name, row.paw_code),
     sex: row.sex,
     estimatedAge: row.estimated_age,
     breed: row.breed,
@@ -129,12 +130,13 @@ export async function getPendingPawsForModeration() {
   if (error) throw new Error(`Unable to load pending profiles: ${error.message}`);
 
   return Promise.all(data.map(async row => {
+    const code = `PP-${String(row.dog_code).padStart(6, "0")}`;
     const primary = row.dog_photos.find(photo => photo.is_primary);
     const signed = primary ? await supabase.storage.from("dog-private-photos").createSignedUrl(primary.storage_path, 900) : null;
     return {
       id: row.id,
-      code: `PP-${String(row.dog_code).padStart(6, "0")}`,
-      name: row.name?.trim() || "Unnamed pup",
+      code,
+      name: getPawDisplayName(row.name, code),
       location: row.found_location_label,
       submittedAt: row.created_at,
       submittedBy: row.profiles?.full_name || "Community member",
@@ -169,11 +171,13 @@ export async function getDuplicateCandidates(): Promise<DuplicateCandidate[]> {
       if (comparable(item.colour) && comparable(item.colour) === comparable(existing.colour)) reasons.push("same colour");
       if (comparable(item.found_location_label) === comparable(existing.found_location_label)) reasons.push("same locality");
       if (reasons.length < 2) continue;
+      const pendingCode = `PP-${String(item.dog_code).padStart(6, "0")}`;
+      const existingCode = `PP-${String(existing.dog_code).padStart(6, "0")}`;
       candidates.push({
-        pendingCode: `PP-${String(item.dog_code).padStart(6, "0")}`,
-        pendingName: item.name?.trim() || "Unnamed pup",
-        existingCode: `PP-${String(existing.dog_code).padStart(6, "0")}`,
-        existingName: existing.name?.trim() || "Unnamed pup",
+        pendingCode,
+        pendingName: getPawDisplayName(item.name, pendingCode),
+        existingCode,
+        existingName: getPawDisplayName(existing.name, existingCode),
         reasons,
       });
     }
