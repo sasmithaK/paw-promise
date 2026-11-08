@@ -6,6 +6,7 @@ This file tracks implementation against `TECHNICAL_SPEC.md`. A checked UI item m
 
 - [x] Next.js App Router and strict TypeScript
 - [x] Tailwind design tokens and responsive component system
+- [x] Replace database-driven homepage records with a static editorial landing experience
 - [x] Pin dependency versions and commit the npm lockfile
 - [x] Initialize the local Supabase CLI v3 workflow
 - [x] Add reviewed schema, RLS, and storage migration files
