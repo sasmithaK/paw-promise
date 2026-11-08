@@ -28,10 +28,6 @@ export default async function HomePage() {
               <ButtonLink href="/paws" size="lg">Explore paw profiles <ArrowRight size={18}/></ButtonLink>
               <ButtonLink href={viewer ? "/paws/new" : "/register"} variant="secondary" size="lg">{viewer ? "Introduce a paw" : "Join the community"}</ButtonLink>
             </div>
-            <div className="mt-9 flex max-w-lg items-start gap-3 border-t border-[var(--line)] pt-5 text-sm leading-6 text-[var(--muted)]">
-              <ShieldCheck className="mt-0.5 shrink-0 text-[var(--primary)]" size={20}/>
-              <p>Public profiles are independently reviewed. Sensitive evidence and exact location history remain inside the authenticated workspace.</p>
-            </div>
           </div>
 
           <div className="relative min-h-[440px] sm:min-h-[520px]">
@@ -93,7 +89,7 @@ export default async function HomePage() {
       <section className="container-shell py-14 sm:py-16">
         <div className="overflow-hidden rounded-[22px] bg-[var(--primary)] px-6 py-10 text-center text-white sm:px-10 sm:py-14">
           <PawPrint className="mx-auto text-white/80" size={30}/><p className="mt-5 text-xs font-bold uppercase tracking-[.12em] text-white/75">A shared promise</p><h2 className="section-title mx-auto mt-3 max-w-3xl text-balance">Help the next carer understand what this pup needs.</h2><p className="mx-auto mt-4 max-w-2xl leading-7 text-white/80">Join Paw Promise to introduce a pup or contribute to an existing community care history.</p>
-          <ButtonLink href={viewer ? "/dashboard" : "/register"} variant="secondary" size="lg" className="mt-7 border-white/30 bg-white text-[var(--primary-hover)] hover:bg-[var(--paper)]">{viewer ? "Open your workspace" : "Become a member"}</ButtonLink>
+          <ButtonLink href={viewer ? "/dashboard" : "/register"} variant="secondary" size="lg" className="mt-7 border-white/30 bg-white hover:bg-[var(--paper)]" style={{ color: "var(--primary-hover)" }}>{viewer ? "Open your workspace" : "Become a member"}</ButtonLink>
         </div>
       </section>
     </main>

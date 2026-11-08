@@ -56,9 +56,8 @@ export function PublicHeader({ viewer = null }: { viewer?: { fullName: string } 
         <div className="container-shell flex h-[70px] items-center justify-between gap-4 sm:h-[76px]">
           <Brand />
 
-          {/* Desktop Center Navigation Pill */}
           <nav
-            className="hidden items-center gap-1 rounded-full border border-[var(--line)]/80 bg-[var(--paper)]/80 px-2 py-1 shadow-xs backdrop-blur-sm md:flex"
+            className="hidden items-center gap-7 md:flex"
             aria-label="Main navigation"
           >
             {links.map((link) => {
@@ -70,10 +69,10 @@ export function PublicHeader({ viewer = null }: { viewer?: { fullName: string } 
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    "focus-ring rounded-full px-3.5 py-1.5 text-[13.5px] font-medium transition-all duration-150",
+                    "focus-ring border-b-2 px-0 py-2 text-[13.5px] font-medium transition-colors",
                     isActive
-                      ? "bg-[var(--primary-soft)]/70 font-semibold text-[var(--cocoa)] shadow-2xs"
-                      : "text-[var(--muted)] hover:bg-black/[0.03] hover:text-[var(--cocoa)]",
+                      ? "border-[var(--primary)] font-semibold text-[var(--cocoa)]"
+                      : "border-transparent text-[var(--muted)] hover:text-[var(--cocoa)]",
                   )}
                 >
                   {link.label}
@@ -82,7 +81,6 @@ export function PublicHeader({ viewer = null }: { viewer?: { fullName: string } 
             })}
           </nav>
 
-          {/* Desktop Actions */}
           <div className="hidden items-center gap-2 md:flex">
             {viewer ? (
               <>
@@ -92,7 +90,7 @@ export function PublicHeader({ viewer = null }: { viewer?: { fullName: string } 
                 <ButtonLink
                   href="/dashboard"
                   size="sm"
-                  className="rounded-full px-4 shadow-xs transition-all hover:scale-[1.02] hover:shadow-sm active:scale-[0.98]"
+                  className="px-4"
                 >
                   <LayoutDashboard size={15} /> Workspace
                 </ButtonLink>
@@ -102,7 +100,7 @@ export function PublicHeader({ viewer = null }: { viewer?: { fullName: string } 
                   variant="quiet"
                   disabled={signingOut}
                   onClick={signOut}
-                  className="rounded-full px-3 text-[var(--muted)] hover:text-[var(--cocoa)]"
+                  className="px-3 text-[var(--muted)] hover:text-[var(--cocoa)]"
                 >
                   {signingOut ? <LoaderCircle className="animate-spin" size={15} /> : <LogOut size={15} />}
                   Sign out
@@ -112,14 +110,14 @@ export function PublicHeader({ viewer = null }: { viewer?: { fullName: string } 
               <>
                 <Link
                   href="/login"
-                  className="focus-ring rounded-full px-3.5 py-1.5 text-sm font-semibold text-[var(--cocoa)] transition-colors hover:text-[var(--primary)]"
+                  className="focus-ring px-3.5 py-1.5 text-sm font-semibold text-[var(--cocoa)] transition-colors hover:text-[var(--primary)]"
                 >
                   Sign in
                 </Link>
                 <ButtonLink
                   href="/register"
                   size="sm"
-                  className="rounded-full px-4 shadow-xs transition-all hover:scale-[1.02] hover:shadow-sm active:scale-[0.98]"
+                  className="px-4"
                 >
                   Join the community
                 </ButtonLink>
@@ -127,9 +125,8 @@ export function PublicHeader({ viewer = null }: { viewer?: { fullName: string } 
             )}
           </div>
 
-          {/* Mobile Menu Button */}
           <button
-            className="focus-ring flex size-10 items-center justify-center rounded-xl border border-[var(--line)]/80 bg-[var(--paper)] text-[var(--cocoa)] shadow-2xs transition-colors hover:bg-[var(--primary-soft)]/40 md:hidden"
+            className="focus-ring flex size-10 items-center justify-center rounded-[8px] border border-[var(--line)] bg-[var(--paper)] text-[var(--cocoa)] transition-colors hover:border-[var(--primary)] md:hidden"
             aria-label={open ? "Close navigation" : "Open navigation"}
             aria-expanded={open}
             onClick={() => setOpen(!open)}
@@ -147,7 +144,7 @@ export function PublicHeader({ viewer = null }: { viewer?: { fullName: string } 
             onClick={() => setOpen(false)}
             aria-hidden="true"
           />
-          <div className="relative mx-3.5 mt-2 overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--paper)] p-4 shadow-xl backdrop-blur-xl">
+          <div className="relative border-y border-[var(--line)] bg-[var(--paper)] p-4">
             <nav className="grid gap-1.5" aria-label="Mobile navigation">
               {links.map((link) => {
                 const isActive =
