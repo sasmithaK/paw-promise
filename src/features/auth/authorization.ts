@@ -15,25 +15,31 @@ export type AuthenticatedIdentity = {
 };
 
 export async function getAuthenticatedIdentity(): Promise<AuthenticatedIdentity | null> {
-  const supabase = await createClient();
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
-  const userId = claimsData?.claims?.sub;
+  try {
+    const supabase = await createClient();
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+    const userId = claimsData?.claims?.sub;
 
-  if (claimsError || !userId) return null;
+    if (claimsError || !userId) return null;
 
-  const [{ data: profile, error: profileError }, { data: roleRows, error: rolesError }] = await Promise.all([
-    supabase.from("profiles").select("full_name, account_status").eq("id", userId).single(),
-    supabase.from("user_roles").select("role").eq("user_id", userId),
-  ]);
+    const [{ data: profile, error: profileError }, { data: roleRows, error: rolesError }] = await Promise.all([
+      supabase.from("profiles").select("full_name, account_status").eq("id", userId).single(),
+      supabase.from("user_roles").select("role").eq("user_id", userId),
+    ]);
 
-  if (profileError || rolesError || !profile) return null;
+    if (profileError || rolesError || !profile) return null;
 
-  return {
-    id: userId,
-    fullName: profile.full_name,
-    accountStatus: profile.account_status,
-    roles: roleRows.map(({ role }) => role),
-  };
+    return {
+      id: userId,
+      fullName: profile.full_name,
+      accountStatus: profile.account_status,
+      roles: roleRows.map(({ role }) => role),
+    };
+  } catch {
+    // Public pages should remain available during a temporary Auth/network outage.
+    // Protected routes still redirect because their required identity is unavailable.
+    return null;
+  }
 }
 
 export async function requireActiveIdentity() {
