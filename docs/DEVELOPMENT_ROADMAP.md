@@ -127,3 +127,13 @@ tracked independently and must finish before a Super Admin can restore a record.
   the Vercel testing deployment using an installed browser channel.
 - Supabase security advisors report only the hosted Auth setting for leaked
   password protection; enable it in the dashboard before a public launch.
+
+## Milestone 6 — Administration and public launch
+
+- [x] Add GitHub Actions CI for typecheck, lint, unit tests, and production builds
+- [x] Refine the public directory and paw profile into a flat, responsive editorial layout
+- [ ] Configure the separate production Supabase project and deployment environment
+- [ ] Configure production email delivery and enable leaked-password protection
+- [ ] Add PWA manifest, icons, and installability
+- [ ] Complete accessibility, mobile, and launch security testing
+- [ ] Document backup, recovery, monitoring, and ownership handover

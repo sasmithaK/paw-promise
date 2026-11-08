@@ -16,10 +16,8 @@ export default function PawsError({ error, retry }: { error: unknown; retry: () 
     <>
       <PublicHeader />
       <main className="container-shell flex min-h-[58vh] items-center justify-center py-12 sm:py-16">
-        <section className="w-full max-w-2xl rounded-[18px] border border-[var(--line)] bg-[var(--paper)] px-5 py-10 text-center sm:px-10 sm:py-14" role="alert">
-          <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-[var(--primary-soft)] text-[var(--primary-dark)]">
-            <AlertTriangle aria-hidden="true" size={23} />
-          </span>
+        <section className="w-full max-w-2xl border-y border-[var(--line)] px-3 py-10 text-center sm:px-10 sm:py-14" role="alert">
+          <AlertTriangle className="mx-auto text-[var(--primary)]" aria-hidden="true" size={28} />
           <h1 className="mt-5 text-2xl font-bold text-[var(--charcoal)] sm:text-3xl">This paw profile did not load</h1>
           <p className="mx-auto mt-3 max-w-lg leading-7 text-[var(--muted)]">
             The connection may have been interrupted. Try once more, or return to the directory.
