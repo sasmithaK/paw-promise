@@ -21,7 +21,7 @@ function MapClick({ onChange }: { onChange: (value: PickedLocation) => void }) {
 export function LocationPicker({ value, onChange }: { value: PickedLocation | null; onChange: (value: PickedLocation) => void }) {
   const centre: LatLngExpression = value ? [value.latitude, value.longitude] : [7.8731, 80.7718];
   return (
-    <div className="h-64 overflow-hidden rounded-b-[12px]" aria-label="Choose an exact restricted location">
+    <div className="h-52 w-full min-w-0 overflow-hidden sm:h-64" aria-label="Choose an exact restricted location">
       <MapContainer center={centre} zoom={value ? 16 : 8} scrollWheelZoom className="h-full w-full">
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
