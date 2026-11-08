@@ -227,10 +227,10 @@ export function WorkspaceShell({
 
         {/* Mobile Navigation Drawer */}
         {menuOpen && (
-          <div className="fixed inset-0 z-40 bg-black/35 lg:hidden" onClick={() => setMenuOpen(false)}>
+          <div className="fixed inset-0 z-40 lg:hidden">
+            <button type="button" className="absolute inset-0 bg-black/35" onClick={() => setMenuOpen(false)} aria-label="Close workspace menu" />
             <aside
-              className="flex h-full w-[min(86vw,320px)] flex-col bg-[var(--paper)] shadow-xl"
-              onClick={(event) => event.stopPropagation()}
+              className="relative flex h-full w-[min(86vw,320px)] flex-col bg-[var(--paper)] shadow-xl"
             >
               <div className="flex items-center justify-between border-b border-[var(--line)] p-5">
                 <Brand />

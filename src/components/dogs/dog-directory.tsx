@@ -72,15 +72,16 @@ export function DogDirectory({ paws }: { paws: PawSummary[] }) {
       </div>
 
       {filtersOpen && (
-        <div className="fixed inset-0 z-50 bg-black/35 lg:hidden" onClick={() => setFiltersOpen(false)}>
-          <div className="absolute inset-y-0 right-0 w-[min(90vw,360px)] overflow-y-auto border-l border-[var(--line)] bg-[var(--paper)] p-5" onClick={(event) => event.stopPropagation()}>
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <button type="button" className="absolute inset-0 bg-black/35" onClick={() => setFiltersOpen(false)} aria-label="Close filters" />
+          <aside className="absolute inset-y-0 right-0 w-[min(90vw,360px)] overflow-y-auto border-l border-[var(--line)] bg-[var(--paper)] p-5">
             <div className="mb-7 flex items-center justify-between border-b border-[var(--line)] pb-4">
               <div><p className="eyebrow">Paw directory</p><h2 className="mt-1 text-xl font-bold">Filter profiles</h2></div>
               <button className="focus-ring p-2" onClick={() => setFiltersOpen(false)} aria-label="Close filters"><X /></button>
             </div>
             {filters}
             <Button className="mt-7 w-full" onClick={() => setFiltersOpen(false)}>Show {filtered.length} paws</Button>
-          </div>
+          </aside>
         </div>
       )}
     </div>
